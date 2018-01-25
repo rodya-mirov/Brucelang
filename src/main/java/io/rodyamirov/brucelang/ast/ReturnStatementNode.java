@@ -5,8 +5,6 @@ public final class ReturnStatementNode extends StatementNode {
 
     public ReturnStatementNode(ExpressionNode evalExpression) {
         this.evalExpression = evalExpression;
-
-        this.evalExpression.setParent(this);
     }
 
     public ExpressionNode getEvalExpression() {

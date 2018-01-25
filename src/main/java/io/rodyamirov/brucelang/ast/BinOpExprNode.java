@@ -9,9 +9,6 @@ public final class BinOpExprNode extends ExpressionNode {
         this.operation = operation;
         this.leftChild = leftChild;
         this.rightChild = rightChild;
-
-        leftChild.setParent(this);
-        rightChild.setParent(this);
     }
 
     @Override

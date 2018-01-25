@@ -1,5 +1,6 @@
 package io.rodyamirov.brucelang.util.collections;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,6 +13,7 @@ import java.util.List;
 public class ConsList<T> {
     public final boolean isEmpty;
     public final T element;
+    @Nullable // null if this is the tail
     public final ConsList<T> rest;
 
     public final int size;
@@ -30,6 +32,11 @@ public class ConsList<T> {
 
     public static <T> ConsList<T> empty() {
         return new ConsList<>(true, null, null);
+    }
+
+    public static <T> ConsList<T> singleton(T elt) {
+        ConsList<T> empty = empty();
+        return empty.extend(elt);
     }
 
     public ConsList<T> extend(T headExtension) {

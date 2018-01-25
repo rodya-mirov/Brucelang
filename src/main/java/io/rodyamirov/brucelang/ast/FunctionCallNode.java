@@ -5,16 +5,12 @@ import com.google.common.collect.ImmutableList;
 import java.util.List;
 
 public final class FunctionCallNode extends ExpressionNode {
-    private final String functionId;
+    private final ExpressionNode functionNode;
     private final ImmutableList<ExpressionNode> arguments;
 
-    private FunctionDeclarationNode reference;
-
-    public FunctionCallNode(String functionId, List<ExpressionNode> arguments) {
-        this.functionId = functionId;
+    public FunctionCallNode(ExpressionNode functionNode, List<ExpressionNode> arguments) {
+        this.functionNode = functionNode;
         this.arguments = ImmutableList.copyOf(arguments);
-
-        this.arguments.forEach(arg -> arg.setParent(this));
     }
 
     @Override
@@ -22,15 +18,11 @@ public final class FunctionCallNode extends ExpressionNode {
         visitor.visitFunctionCallNode(this);
     }
 
-    public String getFunctionId() {
-        return functionId;
+    public ExpressionNode getFunctionNode() {
+        return functionNode;
     }
 
     public ImmutableList<ExpressionNode> getArguments() {
         return arguments;
-    }
-
-    public FunctionDeclarationNode getReference() {
-        return getNamespace().getFunctionDeclaration(functionId);
     }
 }

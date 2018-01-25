@@ -7,9 +7,6 @@ public final class VariableDefinitionNode extends StatementNode {
     public VariableDefinitionNode(String varName, ExpressionNode evalExpr) {
         this.variableDeclarationNode = new VariableDeclarationNode(varName);
         this.evalExpr = evalExpr;
-
-        this.variableDeclarationNode.setParent(this);
-        this.evalExpr.setParent(this);
     }
 
     @Override

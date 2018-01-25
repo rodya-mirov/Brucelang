@@ -8,13 +8,11 @@ import java.util.List;
 /**
  * Top level node of the entire program.
  */
-public final class ProgramNode extends ASTNode<ProgramNode> {
+public final class ProgramNode extends ASTNode {
     private final ImmutableList<StatementNode> statements;
 
     public ProgramNode(@Nonnull List<StatementNode> statements) {
         this.statements = ImmutableList.copyOf(statements);
-
-        this.statements.forEach(sn -> sn.setParent(this));
     }
 
     @Override

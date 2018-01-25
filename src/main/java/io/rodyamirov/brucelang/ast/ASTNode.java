@@ -5,9 +5,8 @@ import io.rodyamirov.brucelang.staticanalysis.Namespace;
 
 import javax.annotation.Nonnull;
 
-public abstract class ASTNode<ParentType extends ASTNode> {
+public abstract class ASTNode {
     private Namespace namespace;
-    private ParentType parent;
 
     protected ASTNode() {
     }
@@ -16,14 +15,6 @@ public abstract class ASTNode<ParentType extends ASTNode> {
 
     public void setNamespace(@Nonnull Namespace namespace) {
         this.namespace = namespace;
-    }
-
-    public ParentType getParent() {
-        return parent;
-    }
-
-    public void setParent(ParentType parent) {
-        this.parent = parent;
     }
 
     @Nonnull
@@ -38,12 +29,10 @@ public abstract class ASTNode<ParentType extends ASTNode> {
     public interface ASTVisitor {
         void visitProgram(ProgramNode programNode);
 
-        void visitFunctionDefinition(FunctionDefinitionNode functionDefinitionNode);
+        void visitFunctionExpr(FunctionExprNode functionDefinitionNode);
         void visitVariableDefinition(VariableDefinitionNode variableDefinitionNode);
 
-        void visitParameterNode(ParameterNode parameterNode);
         void visitVariableDeclaration(VariableDeclarationNode variableDeclarationNode);
-        void visitFunctionDeclaration(FunctionDeclarationNode functionDeclarationNode);
 
         void visitBlockStatement(BlockStatementNode blockStatementNode);
         void visitDoStatement(DoStatementNode doStatementNode);

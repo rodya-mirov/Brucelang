@@ -8,8 +8,6 @@ public final class UnaryOpExprNode extends ExpressionNode {
     public UnaryOpExprNode(Operators.UnOp operation, ExpressionNode child) {
         this.operation = operation;
         this.child = child;
-
-        this.child.setParent(this);
     }
 
     @Override

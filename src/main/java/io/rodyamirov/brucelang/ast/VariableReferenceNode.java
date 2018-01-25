@@ -1,12 +1,10 @@
 package io.rodyamirov.brucelang.ast;
 
-import static io.rodyamirov.brucelang.types.UnknownType.UNKNOWN_TYPE;
-
-public final class VariableReferenceNode extends TypedNode<ASTNode> {
+public final class VariableReferenceNode extends ExpressionNode {
     private final String varName;
 
     public VariableReferenceNode(String varName) {
-        super(UNKNOWN_TYPE);
+        super();
         this.varName = varName;
     }
 
@@ -21,5 +19,10 @@ public final class VariableReferenceNode extends TypedNode<ASTNode> {
 
     public VariableDeclarationNode getDefinition() {
         return getNamespace().getVariableDeclaration(varName);
+    }
+
+    @Override
+    public String getCanonicalName() {
+        return getDefinition().getNamespace().getFullName() + "." + varName;
     }
 }

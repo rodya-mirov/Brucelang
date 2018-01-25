@@ -1,4 +1,4 @@
-// Generated from /Users/richard.rast/personal/brucelang/src/main/antlr/Brucelang.g4 by ANTLR 4.7
+// Generated from /Users/richard.rast/personal/Brucelang/src/main/antlr/Brucelang.g4 by ANTLR 4.7
 
 package io.rodyamirov.brucelang.lexparse;
 
@@ -24,12 +24,6 @@ public interface BrucelangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitStmt(BrucelangParser.StmtContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link BrucelangParser#doStmt}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitDoStmt(BrucelangParser.DoStmtContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link BrucelangParser#returnStmt}.
 	 * @param ctx the parse tree
@@ -61,11 +55,19 @@ public interface BrucelangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFnDef(BrucelangParser.FnDefContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link BrucelangParser#paramList}.
+	 * Visit a parse tree produced by the {@code noIds}
+	 * labeled alternative in {@link BrucelangParser#idList}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitParamList(BrucelangParser.ParamListContext ctx);
+	T visitNoIds(BrucelangParser.NoIdsContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code someIds}
+	 * labeled alternative in {@link BrucelangParser#idList}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSomeIds(BrucelangParser.SomeIdsContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link BrucelangParser#exprList}.
 	 * @param ctx the parse tree
@@ -73,17 +75,47 @@ public interface BrucelangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitExprList(BrucelangParser.ExprListContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link BrucelangParser#expr}.
+	 * Visit a parse tree produced by the {@code lambdaExpression}
+	 * labeled alternative in {@link BrucelangParser#expr}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitExpr(BrucelangParser.ExprContext ctx);
+	T visitLambdaExpression(BrucelangParser.LambdaExpressionContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link BrucelangParser#fnCall}.
+	 * Visit a parse tree produced by the {@code booleanExpression}
+	 * labeled alternative in {@link BrucelangParser#expr}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitFnCall(BrucelangParser.FnCallContext ctx);
+	T visitBooleanExpression(BrucelangParser.BooleanExpressionContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code oneArgLambda}
+	 * labeled alternative in {@link BrucelangParser#lambda}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitOneArgLambda(BrucelangParser.OneArgLambdaContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code multiArgLambda}
+	 * labeled alternative in {@link BrucelangParser#lambda}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitMultiArgLambda(BrucelangParser.MultiArgLambdaContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code oneArgExprLambda}
+	 * labeled alternative in {@link BrucelangParser#lambda}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitOneArgExprLambda(BrucelangParser.OneArgExprLambdaContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code multiArgExprLambda}
+	 * labeled alternative in {@link BrucelangParser#lambda}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitMultiArgExprLambda(BrucelangParser.MultiArgExprLambdaContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code fallThroughAddExpr}
 	 * labeled alternative in {@link BrucelangParser#boolExpr}.
@@ -166,6 +198,20 @@ public interface BrucelangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitBoolConst(BrucelangParser.BoolConstContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code namedFnCall}
+	 * labeled alternative in {@link BrucelangParser#fnCall}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNamedFnCall(BrucelangParser.NamedFnCallContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code anonFnCall}
+	 * labeled alternative in {@link BrucelangParser#fnCall}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAnonFnCall(BrucelangParser.AnonFnCallContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link BrucelangParser#boolOp}.
 	 * @param ctx the parse tree
