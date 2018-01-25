@@ -5,7 +5,7 @@ import io.rodyamirov.brucelang.types.Type;
 /**
  * Intermediate class for ASTNodes which make sense to have associated types.
  */
-public abstract class TypedNode<T extends ASTNode> extends ASTNode<T> {
+public abstract class TypedNode extends ASTNode {
     private Type nodeType;
 
     protected TypedNode(Type defaultType) {

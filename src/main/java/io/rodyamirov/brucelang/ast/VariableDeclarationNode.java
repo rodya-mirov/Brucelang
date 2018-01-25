@@ -2,7 +2,7 @@ package io.rodyamirov.brucelang.ast;
 
 import static io.rodyamirov.brucelang.types.UnknownType.UNKNOWN_TYPE;
 
-public final class VariableDeclarationNode extends DeclarationNode<VariableDefinitionNode> {
+public final class VariableDeclarationNode extends TypedNode {
     private final String varName;
 
     public VariableDeclarationNode(String varName) {

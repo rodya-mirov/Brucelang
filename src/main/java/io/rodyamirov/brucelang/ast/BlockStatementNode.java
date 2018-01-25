@@ -9,8 +9,6 @@ public final class BlockStatementNode extends StatementNode {
 
     public BlockStatementNode(List<StatementNode> statements) {
         this.statements = ImmutableList.copyOf(statements);
-
-        this.statements.forEach(sn -> sn.setParent(this));
     }
 
     public ImmutableList<StatementNode> getStatements() {

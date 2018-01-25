@@ -6,11 +6,9 @@ import io.rodyamirov.brucelang.ast.BlockStatementNode;
 import io.rodyamirov.brucelang.ast.BoolExprNode;
 import io.rodyamirov.brucelang.ast.DoStatementNode;
 import io.rodyamirov.brucelang.ast.FunctionCallNode;
-import io.rodyamirov.brucelang.ast.FunctionDeclarationNode;
-import io.rodyamirov.brucelang.ast.FunctionDefinitionNode;
+import io.rodyamirov.brucelang.ast.FunctionExprNode;
 import io.rodyamirov.brucelang.ast.IfStatementNode;
 import io.rodyamirov.brucelang.ast.IntExprNode;
-import io.rodyamirov.brucelang.ast.ParameterNode;
 import io.rodyamirov.brucelang.ast.ProgramNode;
 import io.rodyamirov.brucelang.ast.ReturnStatementNode;
 import io.rodyamirov.brucelang.ast.StatementNode;
@@ -39,15 +37,26 @@ import java.util.Set;
  * - Detect circularity (outputting an example cycle)
  * - Determine the longest cost path from root to leaf (and output that path)
  */
+// TODO: this doesn't detect circularity like e.g.:
+//      let a = b + 12;
+//      let b = a + 13;
+// because it's too focused on functions. Probably: `let` statements should have associated names
+// and dependency analysis (although we don't think of them as separate namespaces?)
 public class FunctionDependencyAnalyzer {
     // populated by the DependencyVisitor
     private final DependencyGraph dependencyGraph = new DependencyGraph();
 
-    public FunctionDependencyAnalyzer(ProgramNode programNode) {
+    public static Path getWorstPath(ProgramNode programNode, String rootFunction) {
+        FunctionDependencyAnalyzer analyzer = new FunctionDependencyAnalyzer(programNode);
+        return analyzer.findWorstPath(rootFunction);
+    }
+
+    private FunctionDependencyAnalyzer(ProgramNode programNode) {
         new DependencyVisitor().visitProgram(programNode);
     }
 
-    public Path findWorstPath(String rootFunction) {
+    private Path findWorstPath(String rootFunction) {
+        // TODO comments, this is not as clear as it looks
         List<SourceNodeData> sortedTopologically = new ArrayList<>();
         Map<String, Path> worstPaths = new HashMap<>();
 
@@ -55,7 +64,7 @@ public class FunctionDependencyAnalyzer {
             SourceNodeData sourceNode = dependencyGraph.removeSourceNode(rootFunction);
             sortedTopologically.add(sourceNode);
             // TODO: 0 is probably not the ACTUAL cost of running `main` but we're just counting method calls for now
-            worstPaths.put(rootFunction, new Path(ConsList.empty(), 0));
+            worstPaths.put(rootFunction, new Path(ConsList.singleton(rootFunction), 0));
         } else {
             // TODO: error messages
             String msg = String.format("Error: function '%s' is not a root node!", rootFunction);
@@ -121,21 +130,26 @@ public class FunctionDependencyAnalyzer {
         public Path extend(String terminus, Integer stepCost) {
             return new Path(path.extend(terminus), this.totalCost + stepCost);
         }
+
+        /**
+         * Just a nice string for programmer-friendly debugging purposes
+         */
+        public String nicePathString() {
+            if (path.size == 0) {
+                return "[]";
+            }
+
+            StringBuilder sb = new StringBuilder("[").append(path.element);
+            ConsList<String> toProcess = path.rest;
+            while (toProcess != null) {
+                sb.append(" <- ").append(toProcess.element);
+                toProcess = toProcess.rest;
+            }
+            return sb.append(']').toString();
+        }
     }
 
-    public static class RecursionDetectedException extends Exception {
-        private final List<String> cycle;
-
-        public RecursionDetectedException(List<String> cycle) {
-            super("Detected a circular dependency; this is not allowed!");
-            this.cycle = cycle;
-        }
-
-        public List<String> getCycle() {
-            return cycle;
-        }
-    }
-
+    // TODO comments on what this visitor does
     private class DependencyVisitor implements ASTNode.ASTVisitor {
         private final Stack<String> currentFunctionDefnStack = new ArrayStack<>();
 
@@ -145,12 +159,11 @@ public class FunctionDependencyAnalyzer {
         }
 
         @Override
-        public void visitFunctionDefinition(FunctionDefinitionNode functionDefinitionNode) {
-            currentFunctionDefnStack.push(functionDefinitionNode.getFunctionDeclarationNode().getCanonicalName());
-            functionDefinitionNode.getDefinitionStatement().accept(this);
+        public void visitFunctionExpr(FunctionExprNode functionExprNode) {
+            currentFunctionDefnStack.push(functionExprNode.getCanonicalName());
+            functionExprNode.getParameterNodes().forEach(this::visitVariableDeclaration);
+            functionExprNode.getDefinitionStatements().forEach(node -> node.accept(this));
             currentFunctionDefnStack.pop();
-
-            functionDefinitionNode.getFunctionDeclarationNode().accept(this);
         }
 
         @Override
@@ -160,18 +173,8 @@ public class FunctionDependencyAnalyzer {
         }
 
         @Override
-        public void visitParameterNode(ParameterNode parameterNode) {
-            // no op
-        }
-
-        @Override
         public void visitVariableDeclaration(VariableDeclarationNode variableDeclarationNode) {
             // no op
-        }
-
-        @Override
-        public void visitFunctionDeclaration(FunctionDeclarationNode functionDeclarationNode) {
-            functionDeclarationNode.getParameters().forEach(node -> node.accept(this));
         }
 
         @Override
@@ -204,7 +207,7 @@ public class FunctionDependencyAnalyzer {
         public void visitFunctionCallNode(FunctionCallNode functionCallNode) {
             dependencyGraph.addEdge(
                     currentFunctionDefnStack.peek(),
-                    functionCallNode.getReference().getCanonicalName(),
+                    functionCallNode.getFunctionNode().getCanonicalName(),
                     1); // TODO: use actual costs? currently this just counts function calls
 
             functionCallNode.getArguments().forEach(node -> node.accept(this));

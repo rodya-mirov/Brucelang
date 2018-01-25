@@ -5,8 +5,6 @@ public final class DoStatementNode extends StatementNode {
 
     public DoStatementNode(ExpressionNode evalExpression) {
         this.evalExpression = evalExpression;
-
-        evalExpression.setParent(this);
     }
 
     public ExpressionNode getEvalExpression() {

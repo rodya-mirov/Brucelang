@@ -12,13 +12,8 @@ stmt // TODO: named branches
     : blockStmt
     | fnDef
     | varDef
-    | doStmt
     | returnStmt
     | ifStmt
-    ;
-
-doStmt
-    : DO expr ';'
     ;
 
 returnStmt
@@ -38,11 +33,12 @@ varDef
     ;
 
 fnDef
-    : DEFINE ID '(' paramList ')' AS blockStmt
+    : DEFINE ID '(' idList ')' AS blockStmt
     ;
 
-paramList
-    : ID (',' ID)*
+idList
+    :                # noIds
+    | ID (',' ID)*   # someIds
     ;
 
 exprList
@@ -50,12 +46,15 @@ exprList
     ;
 
 expr // top-level expression class
-    : boolExpr
+    : lambda          # lambdaExpression
+    | boolExpr        # booleanExpression
     ;
 
-fnCall
-    : ID '(' exprList ')'
-    // TODO: can functions be first order objects? in which case should we do expr '(' exprList ')' ?
+lambda
+    : ID '=>' blockStmt                # oneArgLambda
+    | '(' idList ')' '=>' blockStmt    # multiArgLambda
+    | ID '=>' expr                     # oneArgExprLambda
+    | '(' idList ')' '=>' expr         # multiArgExprLambda
     ;
 
 boolExpr // expressions involving a boolean operation, not necessarily those which evaluate to a boolean value
@@ -77,12 +76,17 @@ unaryExpr
     ;
 
 baseExpr
-    : '(' expr ')'              # parenExpr
-    | fnCall                    # fallThroughFnCall
-    | ID                        # variableReference
-    | INT                       # numConst
-    | '"' (STRING_CONST)? '"'   # stringConst
-    | boolVal                   # boolConst
+    : '(' expr ')'                     # parenExpr
+    | fnCall                           # fallThroughFnCall
+    | ID                               # variableReference
+    | INT                              # numConst
+    | '"' (STRING_CONST)? '"'          # stringConst
+    | boolVal                          # boolConst
+    ;
+
+fnCall
+    : ID '(' exprList ')'              # namedFnCall
+    | '(' lambda ')' '(' exprList ')'  # anonFnCall
     ;
 
 boolOp    : AND | OR ;
@@ -119,6 +123,6 @@ GTE    : '>=' ;
 EQ     : '==' ;
 NEQ    : '!=' ;
 
-ID : [A_Za-z][A-Za-z0-9_]* ; // ids have to start with a letter, then letter/num/underscore all good
+ID : [A-Za-z][A-Za-z0-9_]* ; // ids have to start with a letter, then letter/num/underscore all good
 INT: [0-9]+ ;             // int
 WS : [ \t\r\n]+ -> skip ; // skip spaces, tabs, newlines

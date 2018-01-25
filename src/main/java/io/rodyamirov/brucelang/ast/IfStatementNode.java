@@ -19,12 +19,6 @@ public final class IfStatementNode extends StatementNode {
         this.conditions = ImmutableList.copyOf(conditions);
         this.resultingStatements = ImmutableList.copyOf(resultStatements);
         this.elseStatement = elseStatement;
-
-        this.conditions.forEach(cond -> cond.setParent(this));
-        this.resultingStatements.forEach(rs -> rs.setParent(this));
-        if (this.elseStatement != null) {
-            this.elseStatement.setParent(this);
-        }
     }
 
     public ImmutableList<ExpressionNode> getConditions() {

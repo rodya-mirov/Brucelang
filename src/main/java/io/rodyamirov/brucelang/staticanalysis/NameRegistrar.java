@@ -6,11 +6,9 @@ import io.rodyamirov.brucelang.ast.BlockStatementNode;
 import io.rodyamirov.brucelang.ast.BoolExprNode;
 import io.rodyamirov.brucelang.ast.DoStatementNode;
 import io.rodyamirov.brucelang.ast.FunctionCallNode;
-import io.rodyamirov.brucelang.ast.FunctionDeclarationNode;
-import io.rodyamirov.brucelang.ast.FunctionDefinitionNode;
+import io.rodyamirov.brucelang.ast.FunctionExprNode;
 import io.rodyamirov.brucelang.ast.IfStatementNode;
 import io.rodyamirov.brucelang.ast.IntExprNode;
-import io.rodyamirov.brucelang.ast.ParameterNode;
 import io.rodyamirov.brucelang.ast.ProgramNode;
 import io.rodyamirov.brucelang.ast.ReturnStatementNode;
 import io.rodyamirov.brucelang.ast.StatementNode;
@@ -39,10 +37,8 @@ public final class NameRegistrar {
      * @param programNode Root node of the program, to be used for name resolution.
      * @return
      */
-    public static Namespace makeNamespace(ProgramNode programNode) {
+    public static void registerNames(ProgramNode programNode) {
         new RegistrarVisitor().visitProgram(programNode);
-
-        return programNode.getNamespace();
     }
 
     private static class RegistrarVisitor implements ASTNode.ASTVisitor {
@@ -68,50 +64,18 @@ public final class NameRegistrar {
         }
 
         @Override
-        public void visitFunctionDefinition(FunctionDefinitionNode functionDefinitionNode) {
+        public void visitFunctionExpr(FunctionExprNode functionDefinitionNode) {
             Namespace localSpace = namespaceStack.peek();
             functionDefinitionNode.setNamespace(localSpace);
 
-            functionDefinitionNode.getFunctionDeclarationNode().accept(this);
-
-            String functionName = functionDefinitionNode
-                    .getFunctionDeclarationNode().getFunctionName();
-
-            // AST hierarchy doesn't completely line up with name resolution -- the definition of the
-            // function is in the associated space, but it's a sibling, rather than a child, of the
-            // declaration. This is so that we don't have diamond inheritance --
-            // DeclarationNode and StatementNode are incompatible
-            Namespace functionSpace = localSpace.getChild(functionName);
+            Namespace functionSpace = localSpace.makeFunctionChild(functionDefinitionNode);
 
             namespaceStack.push(functionSpace);
 
-            functionDefinitionNode.getDefinitionStatement().accept(this);
+            functionDefinitionNode.getParameterNodes().forEach(this::visitVariableDeclaration);
+            functionDefinitionNode.getDefinitionStatements().forEach(node -> node.accept(this));
 
             namespaceStack.pop();
-        }
-
-        @Override
-        public void visitFunctionDeclaration(FunctionDeclarationNode functionDeclarationNode) {
-            Namespace localSpace = namespaceStack.peek();
-            functionDeclarationNode.setNamespace(localSpace);
-
-            String name = functionDeclarationNode.getFunctionName();
-
-            localSpace.register(name, functionDeclarationNode);
-
-            namespaceStack.push(localSpace.makeNamedChild(name));
-
-            functionDeclarationNode.getParameters().forEach(node -> node.accept(this));
-
-            namespaceStack.pop();
-        }
-
-        @Override
-        public void visitParameterNode(ParameterNode parameterNode) {
-            Namespace localSpace = namespaceStack.peek();
-            parameterNode.setNamespace(localSpace);
-
-            localSpace.register(parameterNode.getParameterName(), parameterNode);
         }
 
         @Override
@@ -178,6 +142,7 @@ public final class NameRegistrar {
             Namespace localSpace = namespaceStack.peek();
             functionCallNode.setNamespace(localSpace);
 
+            functionCallNode.getFunctionNode().accept(this);
             functionCallNode.getArguments().forEach(node -> node.accept(this));
         }
 
