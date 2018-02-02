@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Namespace {
     private final Namespace parent;
     private final String localName;
+    private final int depth; // 0 for root, parent.depth+1 otherwise
 
     private final Map<String, VariableDeclarationNode> registeredNames = new HashMap<>();
     private final Map<String, Namespace> childSpaces = new HashMap<>();
@@ -24,6 +25,7 @@ public class Namespace {
     private Namespace(@Nonnull Namespace parent, @Nonnull String localName) {
         this.parent = parent;
         this.localName = localName;
+        this.depth = parent.depth + 1;
 
         this.parent.registerChild(localName, this);
     }
@@ -31,6 +33,7 @@ public class Namespace {
     public Namespace(@Nonnull String localName) {
         this.parent = null;
         this.localName = localName;
+        this.depth = 0;
     }
 
     private Namespace makeNamedChild(@Nonnull String localName) {
@@ -44,6 +47,10 @@ public class Namespace {
         }
 
         childSpaces.put(childName, child);
+    }
+
+    public int getDepth() {
+        return depth;
     }
 
     /**

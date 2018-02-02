@@ -11,8 +11,28 @@ import java.util.EmptyStackException;
  */
 public interface Stack<T> {
     void clear();
+
     void push(T t);
+
     T pop() throws EmptyStackException;
+
+    default T popOr(T defaultValue) {
+        if (this.size() == 0) {
+            return defaultValue;
+        } else {
+            return this.pop();
+        }
+    }
+
     T peek() throws EmptyStackException;
+
+    default T peekOr(T defaultValue) {
+        if (this.size() == 0) {
+            return defaultValue;
+        } else {
+            return this.peek();
+        }
+    }
+
     int size();
 }

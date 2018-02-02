@@ -3,7 +3,7 @@ package io.rodyamirov.brucelang.ast;
 // TODO -- remove this class and replace it with a function call node
 public final class UnaryOpExprNode extends ExpressionNode {
     private final Operators.UnOp operation;
-    private final ExpressionNode child;
+    private ExpressionNode child;
 
     public UnaryOpExprNode(Operators.UnOp operation, ExpressionNode child) {
         this.operation = operation;
@@ -21,5 +21,9 @@ public final class UnaryOpExprNode extends ExpressionNode {
 
     public ExpressionNode getChild() {
         return child;
+    }
+
+    public void setChild(ExpressionNode child) {
+        this.child = child;
     }
 }

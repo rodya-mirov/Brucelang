@@ -1,18 +1,39 @@
 package io.rodyamirov.brucelang.ast;
 
-import com.google.common.collect.ImmutableList;
+import io.rodyamirov.brucelang.astexceptions.WrongOrderException;
 
+import javax.annotation.Nonnull;
 import java.util.List;
 
-public final class BlockStatementNode extends StatementNode {
-    private final ImmutableList<StatementNode> statements;
+public final class BlockStatementNode extends StatementNode implements StatementListHolder {
+    private final List<StatementNode> statements;
+
+    private String localName;
 
     public BlockStatementNode(List<StatementNode> statements) {
-        this.statements = ImmutableList.copyOf(statements);
+        this.statements = statements;
+        this.localName = null; // to be named later
     }
 
-    public ImmutableList<StatementNode> getStatements() {
+    @Nonnull
+    public String getLocalName() {
+        if (localName == null) {
+            throw new WrongOrderException(this, "Name not yet defined for this block!");
+        }
+        return localName;
+    }
+
+    public void setLocalName(@Nonnull String localName) {
+        this.localName = localName;
+    }
+
+    public List<StatementNode> getStatements() {
         return statements;
+    }
+
+    @Override
+    public void insertStatementNode(int index, StatementNode statementNode) {
+        statements.add(index, statementNode);
     }
 
     @Override

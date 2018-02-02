@@ -1,7 +1,7 @@
 define main() as {
     let x = 13 + 14;
     let y = 13 * (x - f(12));
-    return x - g(y);
+    return x - g(y) * chomp(18);
 }
 
 define f(arg) as {
@@ -9,6 +9,12 @@ define f(arg) as {
     let moreHelpful = ((a, b) => (a+b)-arg)(34, 55);
     return helpful;
 }
+
+let chomp = food =>
+    (a => {
+        let x = 12;
+        return a + x;
+    })(food);
 
 let curry = func => (x => func(x, 2, 3, 4));
 

@@ -42,7 +42,8 @@ idList
     ;
 
 exprList
-    : expr (',' expr)*
+    :                   # noExprs
+    | expr (',' expr)*  # someExprs
     ;
 
 expr // top-level expression class

@@ -5,7 +5,9 @@ import io.rodyamirov.brucelang.ast.ProgramNode;
 import io.rodyamirov.brucelang.lexparse.BrucelangLexer;
 import io.rodyamirov.brucelang.lexparse.BrucelangParser;
 import io.rodyamirov.brucelang.staticanalysis.FunctionDependencyAnalyzer;
+import io.rodyamirov.brucelang.staticanalysis.LambdaDesugarer;
 import io.rodyamirov.brucelang.staticanalysis.NameRegistrar;
+import io.rodyamirov.brucelang.staticanalysis.TreePrinter;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -33,8 +35,10 @@ public class Main {
 
         ASTBuilder builder = new ASTBuilder();
         ProgramNode program = builder.visitProgram(parser.program());
-
+        LambdaDesugarer.removeAnonymousFunctions(program);
         NameRegistrar.registerNames(program);
+        System.out.println(TreePrinter.printTree(program));
+
         program.getNamespace().getVariableDeclaration("main"); // throws Exception if not defined
 
         FunctionDependencyAnalyzer.Path
