@@ -74,38 +74,39 @@ public class LambdaDesugarer {
 
         @Override
         public void visitFunctionExpr(FunctionExprNode functionDefinitionNode) {
-            if (functionDefinitionNode.isDefExpr()) {
-                // then we don't need to replace it, but we need to treat it as a scope and so on
-                stmtListHolders.push(functionDefinitionNode);
+            // basic visitor stuff -- this defines a block and we need to visit inside it
+            stmtListHolders.push(functionDefinitionNode);
 
-                AtomicInteger counter = new AtomicInteger(0);
-                for (VariableDeclarationNode param : functionDefinitionNode.getParameterNodes()) {
-                    replacerHelper.safePushPop(
-                            node -> functionDefinitionNode.getParameterNodes().set(counter.get(), (VariableDeclarationNode) node),
-                            () -> param.accept(this)
-                    );
-                    counter.incrementAndGet();
-                }
+            AtomicInteger counter = new AtomicInteger(0);
+            for (VariableDeclarationNode param : functionDefinitionNode.getParameterNodes()) {
+                replacerHelper.safePushPop(
+                        node -> functionDefinitionNode.getParameterNodes().set(counter.get(), (VariableDeclarationNode) node),
+                        () -> param.accept(this)
+                );
+                counter.incrementAndGet();
+            }
 
-                AtomicInteger stmtIndex = new AtomicInteger(0);
-                insertionPoints.push(stmtIndex);
-                while (stmtIndex.get() < functionDefinitionNode.getDefinitionStatements().size()) {
-                    replacerHelper.safePushPop(
-                            node -> {
-                                int insertAt = stmtIndex.getAndIncrement();
-                                functionDefinitionNode.insertStatementNode(insertAt, (StatementNode) node);
-                            },
-                            () -> functionDefinitionNode.getDefinitionStatements().get(stmtIndex.get()).accept(this)
-                    );
-                    stmtIndex.incrementAndGet();
-                }
+            AtomicInteger stmtIndex = new AtomicInteger(0);
+            insertionPoints.push(stmtIndex);
+            while (stmtIndex.get() < functionDefinitionNode.getDefinitionStatements().size()) {
+                replacerHelper.safePushPop(
+                        node -> {
+                            int insertAt = stmtIndex.getAndIncrement();
+                            functionDefinitionNode.insertStatementNode(insertAt, (StatementNode) node);
+                        },
+                        () -> functionDefinitionNode.getDefinitionStatements().get(stmtIndex.get()).accept(this)
+                );
+                stmtIndex.incrementAndGet();
+            }
 
-                insertionPoints.pop();
+            insertionPoints.pop();
+            stmtListHolders.pop();
 
-                stmtListHolders.pop();
-            } else {
+            // but we may also need to replace this expression!
+            if (!functionDefinitionNode.isDefExpr()) {
                 // then this is anonymous, so make a new node, and insert it at the above block
                 String anonName = functionDefinitionNode.getSelfName();
+                functionDefinitionNode.setDefExpr(true);
 
                 stmtListHolders.peek().insertStatementNode(
                         insertionPoints.peek().get(),

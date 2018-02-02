@@ -17,6 +17,8 @@ import io.rodyamirov.brucelang.ast.UnaryOpExprNode;
 import io.rodyamirov.brucelang.ast.VariableDeclarationNode;
 import io.rodyamirov.brucelang.ast.VariableDefinitionNode;
 import io.rodyamirov.brucelang.ast.VariableReferenceNode;
+import io.rodyamirov.brucelang.util.collections.ArrayStack;
+import io.rodyamirov.brucelang.util.collections.Stack;
 
 import java.util.List;
 
@@ -39,6 +41,7 @@ public class TreePrinter {
 
     private static class PrintVisitor implements ASTNode.ASTVisitor {
         private final StringBuilder stringBuilder = new StringBuilder();
+        private final Stack<Boolean> nextShouldIndent = new ArrayStack<>();
 
         private void indent(int scopeDepth) {
             for (int i = 0; i < scopeDepth * spacesPerTab; i++) {
@@ -88,6 +91,7 @@ public class TreePrinter {
             stringBuilder.append(" => {");
             newline();
             functionDefinitionNode.getDefinitionStatements().forEach(stmt -> stmt.accept(this));
+            indent(functionDefinitionNode.getNamespace().getDepth());
             stringBuilder.append('}');
         }
 
@@ -111,14 +115,17 @@ public class TreePrinter {
 
         @Override
         public void visitBlockStatement(BlockStatementNode blockStatementNode) {
-            indent(blockStatementNode.getNamespace().getDepth());
+            if (nextShouldIndent.popOr(true)) { // unless specifically told to not indent, indent
+                indent(blockStatementNode.getNamespace().getDepth());
+            }
+
             stringBuilder.append('{');
+            newline();
 
             blockStatementNode.getStatements().forEach(node -> node.accept(this));
 
             indent(blockStatementNode.getNamespace().getDepth());
             stringBuilder.append('}');
-
             newline();
         }
 
@@ -152,23 +159,23 @@ public class TreePrinter {
             indent(depth);
             stringBuilder.append("if (");
             ifStatementNode.getConditions().get(0).accept(this);
-            stringBuilder.append(")");
-            newline();
+            stringBuilder.append(") ");
+            nextShouldIndent.push(false);
             ifStatementNode.getResultingStatements().get(0).accept(this);
 
             for (int i = 1; i < ifStatementNode.getConditions().size(); i++) {
                 indent(depth);
                 stringBuilder.append(" else if (");
                 ifStatementNode.getConditions().get(i).accept(this);
-                stringBuilder.append(")");
-                newline();
+                stringBuilder.append(") ");
+                nextShouldIndent.push(false);
                 ifStatementNode.getResultingStatements().get(i).accept(this);
             }
 
             if (ifStatementNode.getElseStatement() != null) {
                 indent(depth);
-                stringBuilder.append("else");
-                newline();
+                stringBuilder.append("else ");
+                nextShouldIndent.push(false);
                 ifStatementNode.getElseStatement().accept(this);
             }
         }
