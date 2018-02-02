@@ -1,18 +1,21 @@
 package io.rodyamirov.brucelang.ast;
 
-import com.google.common.collect.ImmutableList;
-
 import javax.annotation.Nonnull;
 import java.util.List;
 
 /**
  * Top level node of the entire program.
  */
-public final class ProgramNode extends ASTNode {
-    private final ImmutableList<StatementNode> statements;
+public final class ProgramNode extends ASTNode implements StatementListHolder {
+    private final List<StatementNode> statements;
 
     public ProgramNode(@Nonnull List<StatementNode> statements) {
-        this.statements = ImmutableList.copyOf(statements);
+        this.statements = statements;
+    }
+
+    @Override
+    public void insertStatementNode(int index, StatementNode statementNode) {
+        statements.add(index, statementNode);
     }
 
     @Override
@@ -20,7 +23,7 @@ public final class ProgramNode extends ASTNode {
         visitor.visitProgram(this);
     }
 
-    public ImmutableList<StatementNode> getStatements() {
+    public List<StatementNode> getStatements() {
         return statements;
     }
 }

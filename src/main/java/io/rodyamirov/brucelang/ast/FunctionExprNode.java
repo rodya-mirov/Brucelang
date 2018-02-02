@@ -1,28 +1,27 @@
 package io.rodyamirov.brucelang.ast;
 
-import com.google.common.collect.ImmutableList;
-
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class FunctionExprNode extends ExpressionNode {
+public class FunctionExprNode extends ExpressionNode implements StatementListHolder {
     private static final AtomicInteger canonicalIds = new AtomicInteger(0);
     private final int myId = canonicalIds.getAndIncrement();
 
     private final String selfName;
-    private final ImmutableList<VariableDeclarationNode> parameterNodes;
+    private final List<VariableDeclarationNode> parameterNodes;
     private final List<StatementNode> definitionStatements;
 
     private FunctionExprNode(List<VariableDeclarationNode> parameterNodes, List<StatementNode> definitionStatements) {
         this.selfName = "$lambda$" + myId;
-        this.definitionStatements = definitionStatements;
-        this.parameterNodes = ImmutableList.copyOf(parameterNodes);
+        this.definitionStatements = new ArrayList<>(definitionStatements);
+        this.parameterNodes = new ArrayList<>(parameterNodes);
     }
 
     private FunctionExprNode(String localName, List<VariableDeclarationNode> parameterNodes, List<StatementNode> definitionStatements) {
         this.selfName = localName;
-        this.definitionStatements = definitionStatements;
-        this.parameterNodes = ImmutableList.copyOf(parameterNodes);
+        this.definitionStatements = new ArrayList<>(definitionStatements);
+        this.parameterNodes = new ArrayList<>(parameterNodes);
     }
 
     public static FunctionExprNode makeNamedFunction(String localName,
@@ -41,12 +40,17 @@ public class FunctionExprNode extends ExpressionNode {
         return selfName;
     }
 
-    public ImmutableList<VariableDeclarationNode> getParameterNodes() {
+    public List<VariableDeclarationNode> getParameterNodes() {
         return parameterNodes;
     }
 
     public List<StatementNode> getDefinitionStatements() {
         return definitionStatements;
+    }
+
+    @Override
+    public void insertStatementNode(int index, StatementNode statementNode) {
+        this.definitionStatements.add(index, statementNode);
     }
 
     @Override

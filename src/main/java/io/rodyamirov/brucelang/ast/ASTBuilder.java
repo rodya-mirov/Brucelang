@@ -104,7 +104,10 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
      */
     @Override
     public VariableDefinitionNode visitVarDef(BrucelangParser.VarDefContext ctx) {
-        return new VariableDefinitionNode(ctx.ID().getText(), (ExpressionNode) ctx.expr().accept(this));
+        ExpressionNode definition = (ExpressionNode) ctx.expr().accept(this);
+        definition.setDefExpr(true);
+
+        return new VariableDefinitionNode(ctx.ID().getText(), definition);
     }
 
     /**
@@ -120,7 +123,20 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
                 visitBlockStmt(ctx.blockStmt()).getStatements()
         );
 
+        definition.setDefExpr(true);
         return new VariableDefinitionNode(ctx.ID().getText(), definition);
+    }
+
+    @Override
+    public List<ExpressionNode> visitNoExprs(BrucelangParser.NoExprsContext ctx) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<ExpressionNode> visitSomeExprs(BrucelangParser.SomeExprsContext ctx) {
+        return ctx.expr().stream()
+                .map(node -> (ExpressionNode) node.accept(this))
+                .collect(Collectors.toList());
     }
 
     private List<VariableDeclarationNode> visitIdList(BrucelangParser.IdListContext ctx) {
@@ -177,19 +193,6 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
         return FunctionExprNode.makeAnonymousFunction(args, Collections.singletonList(eval));
     }
 
-
-    /**
-     * Visit a parse tree produced by {@link BrucelangParser#exprList}.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    @Override
-    public List<ExpressionNode> visitExprList(BrucelangParser.ExprListContext ctx) {
-        return ctx.expr().stream()
-                .map(node -> (ExpressionNode) node.accept(this))
-                .collect(Collectors.toList());
-    }
-
     @Override
     public FunctionExprNode visitLambdaExpression(BrucelangParser.LambdaExpressionContext ctx) {
         return (FunctionExprNode) ctx.lambda().accept(this);
@@ -207,13 +210,17 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
      */
     @Override
     public FunctionCallNode visitNamedFnCall(BrucelangParser.NamedFnCallContext ctx) {
-        return new FunctionCallNode(new VariableReferenceNode(ctx.ID().getText()), visitExprList(ctx.exprList()));
+        return new FunctionCallNode(
+                new VariableReferenceNode(ctx.ID().getText()),
+                (List<ExpressionNode>) ctx.exprList().accept(this)
+        );
     }
 
     @Override
     public FunctionCallNode visitAnonFnCall(BrucelangParser.AnonFnCallContext ctx) {
         FunctionExprNode fnExpr = (FunctionExprNode) ctx.lambda().accept(this);
-        return new FunctionCallNode(fnExpr, visitExprList(ctx.exprList()));
+        return new FunctionCallNode(
+                fnExpr, (List<ExpressionNode>) ctx.exprList().accept(this));
     }
 
     /**
@@ -252,6 +259,7 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
         // TODO: currently this is chained as binary operations -- but maybe we could improve it
         ExpressionNode current = visitMulExpr(ctx.mulExpr(0));
 
+        // TODO: this should probably be reversed in order (otherwise a*b*c will parse as a*(b*c) which is not intuitive)
         for (int i = 1; i < ctx.mulExpr().size(); i++) {
             current = new BinOpExprNode(
                     visitAddOp(ctx.addOp(i-1)),
@@ -274,6 +282,7 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
 
         ExpressionNode current = (ExpressionNode) ctx.unaryExpr(0).accept(this);
 
+        // TODO: this should probably be reversed in order (otherwise a*b*c will parse as a*(b*c) which is not intuitive)
         for (int i = 1; i < ctx.unaryExpr().size(); i++) {
             current = new BinOpExprNode(
                     visitMulOp(ctx.mulOp(i-1)),

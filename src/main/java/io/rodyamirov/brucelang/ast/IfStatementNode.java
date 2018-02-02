@@ -1,37 +1,40 @@
 package io.rodyamirov.brucelang.ast;
 
-import com.google.common.collect.ImmutableList;
-
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.List;
 
 public final class IfStatementNode extends StatementNode {
-    private final ImmutableList<ExpressionNode> conditions;
-    private final ImmutableList<StatementNode> resultingStatements;
+    private final List<ExpressionNode> conditions;
+    private final List<BlockStatementNode> resultingStatements;
 
     @Nullable
-    private final StatementNode elseStatement;
+    private BlockStatementNode elseStatement;
 
     public IfStatementNode(List<? extends ExpressionNode> conditions,
-            List<? extends StatementNode> resultStatements,
-            @Nullable StatementNode elseStatement) {
+            List<? extends BlockStatementNode> resultStatements,
+            @Nullable BlockStatementNode elseStatement) {
 
-        this.conditions = ImmutableList.copyOf(conditions);
-        this.resultingStatements = ImmutableList.copyOf(resultStatements);
+        this.conditions = new ArrayList<>(conditions);
+        this.resultingStatements = new ArrayList<>(resultStatements);
         this.elseStatement = elseStatement;
     }
 
-    public ImmutableList<ExpressionNode> getConditions() {
+    public List<ExpressionNode> getConditions() {
         return conditions;
     }
 
-    public ImmutableList<StatementNode> getResultingStatements() {
+    public List<BlockStatementNode> getResultingStatements() {
         return resultingStatements;
     }
 
     @Nullable
-    public StatementNode getElseStatement() {
+    public BlockStatementNode getElseStatement() {
         return elseStatement;
+    }
+
+    public void setElseStatement(@Nullable BlockStatementNode elseStatement) {
+        this.elseStatement = elseStatement;
     }
 
     @Override

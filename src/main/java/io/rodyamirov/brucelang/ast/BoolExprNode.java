@@ -12,7 +12,7 @@ public final class BoolExprNode extends ExpressionNode {
         visitor.visitBoolExprNode(this);
     }
 
-    public boolean isValue() {
+    public boolean getValue() {
         return value;
     }
 }

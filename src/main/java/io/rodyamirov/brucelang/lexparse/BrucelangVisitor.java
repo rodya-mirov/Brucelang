@@ -69,11 +69,19 @@ public interface BrucelangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitSomeIds(BrucelangParser.SomeIdsContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link BrucelangParser#exprList}.
+	 * Visit a parse tree produced by the {@code noExprs}
+	 * labeled alternative in {@link BrucelangParser#exprList}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitExprList(BrucelangParser.ExprListContext ctx);
+	T visitNoExprs(BrucelangParser.NoExprsContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code someExprs}
+	 * labeled alternative in {@link BrucelangParser#exprList}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSomeExprs(BrucelangParser.SomeExprsContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code lambdaExpression}
 	 * labeled alternative in {@link BrucelangParser#expr}.

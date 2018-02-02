@@ -1,16 +1,15 @@
 package io.rodyamirov.brucelang.ast;
 
-import com.google.common.collect.ImmutableList;
-
+import java.util.ArrayList;
 import java.util.List;
 
 public final class FunctionCallNode extends ExpressionNode {
-    private final ExpressionNode functionNode;
-    private final ImmutableList<ExpressionNode> arguments;
+    private ExpressionNode functionNode;
+    private final List<ExpressionNode> arguments;
 
     public FunctionCallNode(ExpressionNode functionNode, List<ExpressionNode> arguments) {
         this.functionNode = functionNode;
-        this.arguments = ImmutableList.copyOf(arguments);
+        this.arguments = new ArrayList<>(arguments);
     }
 
     @Override
@@ -22,7 +21,11 @@ public final class FunctionCallNode extends ExpressionNode {
         return functionNode;
     }
 
-    public ImmutableList<ExpressionNode> getArguments() {
+    public void setFunctionNode(ExpressionNode functionNode) {
+        this.functionNode = functionNode;
+    }
+
+    public List<ExpressionNode> getArguments() {
         return arguments;
     }
 }

@@ -1,0 +1,5 @@
+let x = ((a, b) => a+b)(12, 13);
+
+define f(y) as {
+    return (() => 54)();
+}

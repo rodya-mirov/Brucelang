@@ -1,8 +1,8 @@
 package io.rodyamirov.brucelang.ast;
 
 public final class VariableDefinitionNode extends StatementNode {
-    private final VariableDeclarationNode variableDeclarationNode;
-    private final ExpressionNode evalExpr;
+    private VariableDeclarationNode variableDeclarationNode;
+    private ExpressionNode evalExpr;
 
     public VariableDefinitionNode(String varName, ExpressionNode evalExpr) {
         this.variableDeclarationNode = new VariableDeclarationNode(varName);
@@ -18,7 +18,16 @@ public final class VariableDefinitionNode extends StatementNode {
         return variableDeclarationNode;
     }
 
+    public void setVariableDeclarationNode(
+            VariableDeclarationNode variableDeclarationNode) {
+        this.variableDeclarationNode = variableDeclarationNode;
+    }
+
     public ExpressionNode getEvalExpr() {
         return evalExpr;
+    }
+
+    public void setEvalExpr(ExpressionNode evalExpr) {
+        this.evalExpr = evalExpr;
     }
 }
