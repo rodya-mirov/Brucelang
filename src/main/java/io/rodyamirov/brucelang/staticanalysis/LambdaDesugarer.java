@@ -75,7 +75,9 @@ public class LambdaDesugarer {
         @Override
         public void visitFunctionExpr(FunctionExprNode functionDefinitionNode) {
             if (functionDefinitionNode.isDefExpr()) {
-                // then we're cool
+                // then we don't need to replace it, but we need to treat it as a scope and so on
+                stmtListHolders.push(functionDefinitionNode);
+
                 AtomicInteger counter = new AtomicInteger(0);
                 for (VariableDeclarationNode param : functionDefinitionNode.getParameterNodes()) {
                     replacerHelper.safePushPop(
@@ -85,16 +87,24 @@ public class LambdaDesugarer {
                     counter.incrementAndGet();
                 }
 
-                counter.set(0);
-                for (StatementNode defStmt : functionDefinitionNode.getDefinitionStatements()) {
+                AtomicInteger stmtIndex = new AtomicInteger(0);
+                insertionPoints.push(stmtIndex);
+                while (stmtIndex.get() < functionDefinitionNode.getDefinitionStatements().size()) {
                     replacerHelper.safePushPop(
-                            node -> functionDefinitionNode.getDefinitionStatements().set(counter.get(), (StatementNode) node),
-                            () -> defStmt.accept(this)
+                            node -> {
+                                int insertAt = stmtIndex.getAndIncrement();
+                                functionDefinitionNode.insertStatementNode(insertAt, (StatementNode) node);
+                            },
+                            () -> functionDefinitionNode.getDefinitionStatements().get(stmtIndex.get()).accept(this)
                     );
-                    counter.incrementAndGet();
+                    stmtIndex.incrementAndGet();
                 }
+
+                insertionPoints.pop();
+
+                stmtListHolders.pop();
             } else {
-                // make a new node, insert it at the above block
+                // then this is anonymous, so make a new node, and insert it at the above block
                 String anonName = functionDefinitionNode.getSelfName();
 
                 stmtListHolders.peek().insertStatementNode(
@@ -129,18 +139,19 @@ public class LambdaDesugarer {
 
         @Override
         public void visitBlockStatement(BlockStatementNode blockStatementNode) {
-            // TODO: it is known that this does not work
             stmtListHolders.push(blockStatementNode);
-            insertionPoints.push(new AtomicInteger(0));
 
-            AtomicInteger counter = new AtomicInteger(0);
-            for (StatementNode child : blockStatementNode.getStatements()) {
+            AtomicInteger stmtIndex = new AtomicInteger(0);
+            insertionPoints.push(stmtIndex);
+            while (stmtIndex.get() < blockStatementNode.getStatements().size()) {
                 replacerHelper.safePushPop(
-                        node -> blockStatementNode.getStatements().set(counter.get(), (StatementNode) node),
-                        () -> child.accept(this)
+                        node -> {
+                            int insertAt = stmtIndex.getAndIncrement();
+                            blockStatementNode.insertStatementNode(insertAt, (StatementNode) node);
+                        },
+                        () -> blockStatementNode.getStatements().get(stmtIndex.get()).accept(this)
                 );
-                counter.incrementAndGet();
-                insertionPoints.peek().incrementAndGet();
+                stmtIndex.incrementAndGet();
             }
 
             insertionPoints.pop();

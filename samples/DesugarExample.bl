@@ -3,3 +3,13 @@ let x = ((a, b) => a+b)(12, 13);
 define f(y) as {
     return (() => 54)();
 }
+
+if (true) {
+    let x = (() => 12)();
+}
+
+define nested() as {
+    return ((a) => (() => 15)())(12);
+}
+
+let main = 12;

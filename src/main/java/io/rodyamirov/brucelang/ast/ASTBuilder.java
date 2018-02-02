@@ -9,6 +9,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements BrucelangVisitor<Object> {
@@ -92,9 +93,12 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
         }
 
         // this returns null if there isn't one, which is great
-        BlockStatementNode elseStatement = visitBlockStmt(ctx.blockStmt(conditions.size() + 1));
+        BlockStatementNode maybeElse = Optional
+                .ofNullable(ctx.blockStmt(conditions.size() + 1))
+                .map(this::visitBlockStmt)
+                .orElse(null);
 
-        return new IfStatementNode(conditions, resultStatements, elseStatement);
+        return new IfStatementNode(conditions, resultStatements, maybeElse);
     }
 
     /**

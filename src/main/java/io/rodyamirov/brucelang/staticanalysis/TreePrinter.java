@@ -118,6 +118,8 @@ public class TreePrinter {
 
             indent(blockStatementNode.getNamespace().getDepth());
             stringBuilder.append('}');
+
+            newline();
         }
 
         @Override
@@ -151,6 +153,7 @@ public class TreePrinter {
             stringBuilder.append("if (");
             ifStatementNode.getConditions().get(0).accept(this);
             stringBuilder.append(")");
+            newline();
             ifStatementNode.getResultingStatements().get(0).accept(this);
 
             for (int i = 1; i < ifStatementNode.getConditions().size(); i++) {
@@ -158,12 +161,14 @@ public class TreePrinter {
                 stringBuilder.append(" else if (");
                 ifStatementNode.getConditions().get(i).accept(this);
                 stringBuilder.append(")");
+                newline();
                 ifStatementNode.getResultingStatements().get(i).accept(this);
             }
 
             if (ifStatementNode.getElseStatement() != null) {
                 indent(depth);
                 stringBuilder.append("else");
+                newline();
                 ifStatementNode.getElseStatement().accept(this);
             }
         }
