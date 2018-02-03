@@ -37,7 +37,7 @@ public class Main {
         ProgramNode program = builder.visitProgram(parser.program());
         LambdaDesugarer.removeAnonymousFunctions(program);
         NameRegistrar.registerNames(program);
-        System.out.println(TreePrinter.printTree(program));
+        System.out.println(TreePrinter.printTree(program, true));
 
         program.getNamespace().getVariableDeclaration("main"); // throws Exception if not defined
 

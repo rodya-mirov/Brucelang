@@ -5,6 +5,7 @@ import io.rodyamirov.brucelang.ast.BinOpExprNode;
 import io.rodyamirov.brucelang.ast.BlockStatementNode;
 import io.rodyamirov.brucelang.ast.BoolExprNode;
 import io.rodyamirov.brucelang.ast.DoStatementNode;
+import io.rodyamirov.brucelang.ast.FieldAccessNode;
 import io.rodyamirov.brucelang.ast.FunctionCallNode;
 import io.rodyamirov.brucelang.ast.FunctionExprNode;
 import io.rodyamirov.brucelang.ast.IfStatementNode;
@@ -145,6 +146,16 @@ public final class NameRegistrar {
 
             functionCallNode.getFunctionNode().accept(this);
             functionCallNode.getArguments().forEach(node -> node.accept(this));
+        }
+
+        @Override
+        public void visitFieldAccess(FieldAccessNode fieldAccessNode) {
+            Namespace localSpace = namespaceStack.peek();
+            fieldAccessNode.setNamespace(localSpace);
+
+            fieldAccessNode.getBaseNode().accept(this);
+            // NB: we're not registering that this thing has a field, here; it's not a unique name
+            // and it doesn't go in the namespace
         }
 
         @Override

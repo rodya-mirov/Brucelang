@@ -72,22 +72,22 @@ mulExpr
     ;
 
 unaryExpr
-    : baseExpr          # fallThroughBaseExpr
-    | unaryOp unaryExpr # nestedUnaryExpr
+    : accessOrCall         # fallThroughAccessOrCall
+    | unaryOp unaryExpr    # nestedUnaryExpr
+    ;
+
+accessOrCall
+    : accessOrCall '.' ID           # namedFieldAccess
+    | accessOrCall '(' exprList ')' # fnCall
+    | baseExpr                      # fallThroughBaseExpr
     ;
 
 baseExpr
     : '(' expr ')'                     # parenExpr
-    | fnCall                           # fallThroughFnCall
     | ID                               # variableReference
     | INT                              # numConst
     | '"' (STRING_CONST)? '"'          # stringConst
     | boolVal                          # boolConst
-    ;
-
-fnCall
-    : ID '(' exprList ')'              # namedFnCall
-    | '(' lambda ')' '(' exprList ')'  # anonFnCall
     ;
 
 boolOp    : AND | OR ;

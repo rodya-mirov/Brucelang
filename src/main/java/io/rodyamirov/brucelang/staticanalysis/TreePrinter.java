@@ -5,6 +5,7 @@ import io.rodyamirov.brucelang.ast.BinOpExprNode;
 import io.rodyamirov.brucelang.ast.BlockStatementNode;
 import io.rodyamirov.brucelang.ast.BoolExprNode;
 import io.rodyamirov.brucelang.ast.DoStatementNode;
+import io.rodyamirov.brucelang.ast.FieldAccessNode;
 import io.rodyamirov.brucelang.ast.FunctionCallNode;
 import io.rodyamirov.brucelang.ast.FunctionExprNode;
 import io.rodyamirov.brucelang.ast.IfStatementNode;
@@ -29,8 +30,19 @@ public class TreePrinter {
     private TreePrinter() {
     }
 
-    public static String printTree(ASTNode node) {
-        PrintVisitor printVisitor = new PrintVisitor();
+    /**
+     * Get a string representation of the AST node supplied.
+     *
+     * @param node The node to print out
+     * @param excessiveParens If true, will insert parens everywhere, even if they aren't really
+     *                        necessary. If false, will use fewer, but probably still more than
+     *                        you really need.
+     * @return A string representation of the program, which is (almost!) valid source code.
+     *          Note that due to desugaring some variables may have illegal names, so the code
+     *          may not compile.
+     */
+    public static String printTree(ASTNode node, boolean excessiveParens) {
+        PrintVisitor printVisitor = new PrintVisitor(excessiveParens);
         node.accept(printVisitor);
         return printVisitor.stringBuilder.toString();
     }
@@ -42,6 +54,11 @@ public class TreePrinter {
     private static class PrintVisitor implements ASTNode.ASTVisitor {
         private final StringBuilder stringBuilder = new StringBuilder();
         private final Stack<Boolean> nextShouldIndent = new ArrayStack<>();
+        private final boolean excessiveParens;
+
+        public PrintVisitor(boolean excessiveParens) {
+            this.excessiveParens = excessiveParens;
+        }
 
         private void indent(int scopeDepth) {
             for (int i = 0; i < scopeDepth * spacesPerTab; i++) {
@@ -182,25 +199,53 @@ public class TreePrinter {
 
         @Override
         public void visitFunctionCallNode(FunctionCallNode functionCallNode) {
+            if (excessiveParens) {
+                stringBuilder.append('(');
+            }
+
             functionCallNode.getFunctionNode().accept(this);
             stringBuilder.append('(');
             commaSepList(functionCallNode.getArguments());
             stringBuilder.append(')');
+
+            if (excessiveParens) {
+                stringBuilder.append(')');
+            }
         }
 
         @Override
         public void visitBinOpExprNode(BinOpExprNode binOpExprNode) {
+            // TODO: these parens can sometimes, but not always, be omitted. Not sure how to nicify
+            // TODO: without doing a LOT of extra work
             stringBuilder.append('(');
             binOpExprNode.getLeftChild().accept(this);
+            stringBuilder.append(' ');
             stringBuilder.append(binOpExprNode.getOperation().toString());
+            stringBuilder.append(' ');
             binOpExprNode.getRightChild().accept(this);
             stringBuilder.append(')');
+        }
+
+        @Override
+        public void visitFieldAccess(FieldAccessNode fieldAccessNode) {
+            if (excessiveParens) {
+                stringBuilder.append('(');
+            }
+
+            fieldAccessNode.getBaseNode().accept(this);
+            stringBuilder.append('.');
+            stringBuilder.append(fieldAccessNode.getFieldName());
+
+            if (excessiveParens) {
+                stringBuilder.append(')');
+            }
         }
 
         @Override
         public void visitUnaryOpExprNode(UnaryOpExprNode unaryOpExprNode) {
             stringBuilder.append('(');
             stringBuilder.append(unaryOpExprNode.getOperation().toString());
+            stringBuilder.append(' ');
             unaryOpExprNode.getChild().accept(this);
             stringBuilder.append(')');
         }

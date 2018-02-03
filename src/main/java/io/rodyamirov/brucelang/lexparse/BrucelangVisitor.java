@@ -151,12 +151,12 @@ public interface BrucelangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitMulExpr(BrucelangParser.MulExprContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code fallThroughBaseExpr}
+	 * Visit a parse tree produced by the {@code fallThroughAccessOrCall}
 	 * labeled alternative in {@link BrucelangParser#unaryExpr}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitFallThroughBaseExpr(BrucelangParser.FallThroughBaseExprContext ctx);
+	T visitFallThroughAccessOrCall(BrucelangParser.FallThroughAccessOrCallContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code nestedUnaryExpr}
 	 * labeled alternative in {@link BrucelangParser#unaryExpr}.
@@ -165,19 +165,33 @@ public interface BrucelangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitNestedUnaryExpr(BrucelangParser.NestedUnaryExprContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code fnCall}
+	 * labeled alternative in {@link BrucelangParser#accessOrCall}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFnCall(BrucelangParser.FnCallContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code fallThroughBaseExpr}
+	 * labeled alternative in {@link BrucelangParser#accessOrCall}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFallThroughBaseExpr(BrucelangParser.FallThroughBaseExprContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code namedFieldAccess}
+	 * labeled alternative in {@link BrucelangParser#accessOrCall}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNamedFieldAccess(BrucelangParser.NamedFieldAccessContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code parenExpr}
 	 * labeled alternative in {@link BrucelangParser#baseExpr}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitParenExpr(BrucelangParser.ParenExprContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code fallThroughFnCall}
-	 * labeled alternative in {@link BrucelangParser#baseExpr}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitFallThroughFnCall(BrucelangParser.FallThroughFnCallContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code variableReference}
 	 * labeled alternative in {@link BrucelangParser#baseExpr}.
@@ -206,20 +220,6 @@ public interface BrucelangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitBoolConst(BrucelangParser.BoolConstContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code namedFnCall}
-	 * labeled alternative in {@link BrucelangParser#fnCall}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitNamedFnCall(BrucelangParser.NamedFnCallContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code anonFnCall}
-	 * labeled alternative in {@link BrucelangParser#fnCall}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitAnonFnCall(BrucelangParser.AnonFnCallContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link BrucelangParser#boolOp}.
 	 * @param ctx the parse tree
