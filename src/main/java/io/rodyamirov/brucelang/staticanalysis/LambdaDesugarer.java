@@ -6,6 +6,7 @@ import io.rodyamirov.brucelang.ast.BlockStatementNode;
 import io.rodyamirov.brucelang.ast.BoolExprNode;
 import io.rodyamirov.brucelang.ast.DoStatementNode;
 import io.rodyamirov.brucelang.ast.ExpressionNode;
+import io.rodyamirov.brucelang.ast.FieldAccessNode;
 import io.rodyamirov.brucelang.ast.FunctionCallNode;
 import io.rodyamirov.brucelang.ast.FunctionExprNode;
 import io.rodyamirov.brucelang.ast.IfStatementNode;
@@ -222,6 +223,14 @@ public class LambdaDesugarer {
             replacerHelper.safePushPop(
                     node -> binOpExprNode.setRightChild((ExpressionNode) node),
                     () -> binOpExprNode.getRightChild().accept(this)
+            );
+        }
+
+        @Override
+        public void visitFieldAccess(FieldAccessNode fieldAccessNode) {
+            replacerHelper.safePushPop(
+                    node -> fieldAccessNode.setBaseNode((ExpressionNode) node),
+                    () -> fieldAccessNode.getBaseNode().accept(this)
             );
         }
 

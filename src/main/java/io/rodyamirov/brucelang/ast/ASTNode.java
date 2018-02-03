@@ -43,6 +43,8 @@ public abstract class ASTNode {
         void visitBinOpExprNode(BinOpExprNode binOpExprNode);
         void visitUnaryOpExprNode(UnaryOpExprNode unaryOpExprNode);
 
+        void visitFieldAccess(FieldAccessNode fieldAccessNode);
+
         void visitIntExprNode(IntExprNode integerNode);
         void visitBoolExprNode(BoolExprNode booleanNode);
         void visitStringExprNode(StringExprNode stringExprNode);
