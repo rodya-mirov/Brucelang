@@ -19,4 +19,8 @@ public final class VariableDeclarationNode extends TypedNode {
     public void accept(ASTVisitor visitor) {
         visitor.visitVariableDeclaration(this);
     }
+
+    public String getCanonicalName() {
+        return getNamespace().getFullName() + "." + getVarName();
+    }
 }

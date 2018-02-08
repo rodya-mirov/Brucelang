@@ -67,13 +67,9 @@ public class Namespace {
     }
 
     public synchronized Namespace makeFunctionChild(FunctionExprNode functionExprNode) {
-        String localName = functionExprNode.getSelfName();
+        String localName = functionExprNode.getDefinedName().getVarName();
 
         return makeNamedChild(localName);
-    }
-
-    public String getLocalName() {
-        return localName;
     }
 
     public String getFullName() {

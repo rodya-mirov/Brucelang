@@ -8,27 +8,24 @@ import static io.rodyamirov.brucelang.types.UnknownType.UNKNOWN_TYPE;
 public abstract class ExpressionNode extends TypedNode {
     // whether this expression is a definitional expression (something is "let x = [this expression]")
     private boolean isDefExpr;
+    private VariableDeclarationNode definedName;
 
     protected ExpressionNode() {
         super(UNKNOWN_TYPE);
         isDefExpr = false;
+        definedName = null;
     }
 
     public boolean isDefExpr() {
         return isDefExpr;
     }
 
-    public void setDefExpr(boolean defExpr) {
-        isDefExpr = defExpr;
+    public VariableDeclarationNode getDefinedName() {
+        return definedName;
     }
 
-    /**
-     * Gives a canonical name in the form of [namespaceName].$[myId]
-     *
-     * This can be overridden in the case of an expression whose name we definitely know
-     * @return
-     */
-    public String getCanonicalName() {
-        throw new RuntimeException("General expressions don't have names!");
+    public void assignToName(VariableDeclarationNode definedName) {
+        this.isDefExpr = true;
+        this.definedName = definedName;
     }
 }

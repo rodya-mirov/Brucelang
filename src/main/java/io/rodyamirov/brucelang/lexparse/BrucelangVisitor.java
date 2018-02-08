@@ -125,19 +125,33 @@ public interface BrucelangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitMultiArgExprLambda(BrucelangParser.MultiArgExprLambdaContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code fallThroughCompExpr}
+	 * labeled alternative in {@link BrucelangParser#linkedBoolExpr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFallThroughCompExpr(BrucelangParser.FallThroughCompExprContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code boolOpExpr}
+	 * labeled alternative in {@link BrucelangParser#linkedBoolExpr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitBoolOpExpr(BrucelangParser.BoolOpExprContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code fallThroughAddExpr}
-	 * labeled alternative in {@link BrucelangParser#boolExpr}.
+	 * labeled alternative in {@link BrucelangParser#compExpr}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitFallThroughAddExpr(BrucelangParser.FallThroughAddExprContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code boolOpExpr}
-	 * labeled alternative in {@link BrucelangParser#boolExpr}.
+	 * Visit a parse tree produced by the {@code compOpExpr}
+	 * labeled alternative in {@link BrucelangParser#compExpr}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitBoolOpExpr(BrucelangParser.BoolOpExprContext ctx);
+	T visitCompOpExpr(BrucelangParser.CompOpExprContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link BrucelangParser#addExpr}.
 	 * @param ctx the parse tree

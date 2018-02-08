@@ -4,7 +4,6 @@ import io.rodyamirov.brucelang.ast.ASTBuilder;
 import io.rodyamirov.brucelang.ast.ProgramNode;
 import io.rodyamirov.brucelang.lexparse.BrucelangLexer;
 import io.rodyamirov.brucelang.lexparse.BrucelangParser;
-import io.rodyamirov.brucelang.staticanalysis.FunctionDependencyAnalyzer;
 import io.rodyamirov.brucelang.staticanalysis.LambdaDesugarer;
 import io.rodyamirov.brucelang.staticanalysis.NameRegistrar;
 import io.rodyamirov.brucelang.staticanalysis.TreePrinter;
@@ -38,13 +37,5 @@ public class Main {
         LambdaDesugarer.removeAnonymousFunctions(program);
         NameRegistrar.registerNames(program);
         System.out.println(TreePrinter.printTree(program, true));
-
-        program.getNamespace().getVariableDeclaration("main"); // throws Exception if not defined
-
-        FunctionDependencyAnalyzer.Path
-                worstPath = FunctionDependencyAnalyzer.getWorstPath(program, "global.main");
-        System.out.println("Most expensive path under 'main':");
-        System.out.println("  Cost (method calls): " + worstPath.totalCost);
-        System.out.println("  Call path: " + worstPath.nicePathString());
     }
 }

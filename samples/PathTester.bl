@@ -1,0 +1,22 @@
+let third = (a, b, c) => {
+    let ignored = fourth(b);
+    let jim = (x => x+a+fourth(c));
+};
+
+let difficult = (f => (x => f(x)));
+
+let second = alpha => { return third(alpha, alpha, difficult(alpha)); };
+
+let main = first - 1;
+
+let first = () => {
+    if (7 < 12) {
+        return second(12);
+    } else if (7 > 12) {
+        return third(15 * first);
+    } else {
+        return fourth(7);
+    }
+};
+
+let fourth = x => x;
