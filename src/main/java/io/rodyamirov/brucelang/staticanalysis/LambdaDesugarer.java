@@ -162,12 +162,18 @@ public class LambdaDesugarer {
 
         @Override
         public void visitDoStatement(DoStatementNode doStatementNode) {
-            doStatementNode.getEvalExpression().accept(this);
+            replacerHelper.safePushPop(
+                    node -> doStatementNode.setEvalExpression((ExpressionNode) node),
+                    () -> doStatementNode.getEvalExpression().accept(this)
+            );
         }
 
         @Override
         public void visitReturnStatement(ReturnStatementNode returnStatementNode) {
-            returnStatementNode.getEvalExpression().accept(this);
+            replacerHelper.safePushPop(
+                    node -> returnStatementNode.setEvalExpression((ExpressionNode) node),
+                    () -> returnStatementNode.getEvalExpression().accept(this)
+            );
         }
 
         @Override

@@ -21,14 +21,4 @@ public abstract class ExpressionNode extends TypedNode {
     public void setDefExpr(boolean defExpr) {
         isDefExpr = defExpr;
     }
-
-    /**
-     * Gives a canonical name in the form of [namespaceName].$[myId]
-     *
-     * This can be overridden in the case of an expression whose name we definitely know
-     * @return
-     */
-    public String getCanonicalName() {
-        throw new RuntimeException("General expressions don't have names!");
-    }
 }

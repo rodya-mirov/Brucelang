@@ -1,7 +1,7 @@
 package io.rodyamirov.brucelang.ast;
 
 public final class DoStatementNode extends StatementNode {
-    private final ExpressionNode evalExpression;
+    private ExpressionNode evalExpression;
 
     public DoStatementNode(ExpressionNode evalExpression) {
         this.evalExpression = evalExpression;
@@ -9,6 +9,10 @@ public final class DoStatementNode extends StatementNode {
 
     public ExpressionNode getEvalExpression() {
         return evalExpression;
+    }
+
+    public void setEvalExpression(ExpressionNode evalExpression) {
+        this.evalExpression = evalExpression;
     }
 
     @Override

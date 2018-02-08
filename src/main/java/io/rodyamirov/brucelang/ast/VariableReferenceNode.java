@@ -21,7 +21,6 @@ public final class VariableReferenceNode extends ExpressionNode {
         return getNamespace().getVariableDeclaration(varName);
     }
 
-    @Override
     public String getCanonicalName() {
         return getDefinition().getNamespace().getFullName() + "." + varName;
     }

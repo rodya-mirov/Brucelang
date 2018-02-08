@@ -58,7 +58,6 @@ public class FunctionExprNode extends ExpressionNode implements StatementListHol
         visitor.visitFunctionExpr(this);
     }
 
-    @Override
     public String getCanonicalName() {
         return getNamespace().getFullName() + "." + this.selfName;
     }
