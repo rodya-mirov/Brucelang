@@ -48,7 +48,7 @@ exprList
 
 expr // top-level expression class
     : lambda          # lambdaExpression
-    | boolExpr        # booleanExpression
+    | linkedBoolExpr  # booleanExpression
     ;
 
 lambda
@@ -58,9 +58,14 @@ lambda
     | '(' idList ')' '=>' expr         # multiArgExprLambda
     ;
 
-boolExpr // expressions involving a boolean operation, not necessarily those which evaluate to a boolean value
+linkedBoolExpr
+    : compExpr                  # fallThroughCompExpr
+    | compExpr boolOp compExpr  # boolOpExpr
+    ;
+
+compExpr
     : addExpr                   # fallThroughAddExpr
-    | addExpr boolOp addExpr    # boolOpExpr // note not a list; attempts to chain must be parenthetized (this may change)
+    | addExpr compOp addExpr    # compOpExpr
     ;
 
 addExpr

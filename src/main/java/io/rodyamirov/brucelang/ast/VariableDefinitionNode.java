@@ -4,8 +4,8 @@ public final class VariableDefinitionNode extends StatementNode {
     private VariableDeclarationNode variableDeclarationNode;
     private ExpressionNode evalExpr;
 
-    public VariableDefinitionNode(String varName, ExpressionNode evalExpr) {
-        this.variableDeclarationNode = new VariableDeclarationNode(varName);
+    public VariableDefinitionNode(VariableDeclarationNode varDecl, ExpressionNode evalExpr) {
+        this.variableDeclarationNode = varDecl;
         this.evalExpr = evalExpr;
     }
 

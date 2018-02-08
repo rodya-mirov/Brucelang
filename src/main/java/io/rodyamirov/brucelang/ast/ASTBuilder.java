@@ -94,7 +94,7 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
 
         // this returns null if there isn't one, which is great
         BlockStatementNode maybeElse = Optional
-                .ofNullable(ctx.blockStmt(conditions.size() + 1))
+                .ofNullable(ctx.blockStmt(conditions.size()))
                 .map(this::visitBlockStmt)
                 .orElse(null);
 
@@ -108,10 +108,11 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
      */
     @Override
     public VariableDefinitionNode visitVarDef(BrucelangParser.VarDefContext ctx) {
+        VariableDeclarationNode declarationNode = new VariableDeclarationNode(ctx.ID().getText());
         ExpressionNode definition = (ExpressionNode) ctx.expr().accept(this);
-        definition.setDefExpr(true);
+        definition.assignToName(declarationNode);
 
-        return new VariableDefinitionNode(ctx.ID().getText(), definition);
+        return new VariableDefinitionNode(declarationNode, definition);
     }
 
     /**
@@ -121,14 +122,15 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
      */
     @Override
     public StatementNode visitFnDef(BrucelangParser.FnDefContext ctx) {
-        FunctionExprNode definition = FunctionExprNode.makeNamedFunction(
-                ctx.ID().getText(),
+        VariableDeclarationNode declarationNode = new VariableDeclarationNode(ctx.ID().getText());
+
+        FunctionExprNode definition = new FunctionExprNode(
                 visitIdList(ctx.idList()),
                 visitBlockStmt(ctx.blockStmt()).getStatements()
         );
 
-        definition.setDefExpr(true);
-        return new VariableDefinitionNode(ctx.ID().getText(), definition);
+        definition.assignToName(declarationNode);
+        return new VariableDefinitionNode(declarationNode, definition);
     }
 
     @Override
@@ -166,7 +168,7 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
         );
         BlockStatementNode eval = this.visitBlockStmt(ctx.blockStmt());
 
-        return FunctionExprNode.makeAnonymousFunction(args, eval.getStatements());
+        return new FunctionExprNode(args, eval.getStatements());
     }
 
     @Override
@@ -174,7 +176,7 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
         List<VariableDeclarationNode> args = this.visitIdList(ctx.idList());
         BlockStatementNode eval = this.visitBlockStmt(ctx.blockStmt());
 
-        return FunctionExprNode.makeAnonymousFunction(args, eval.getStatements());
+        return new FunctionExprNode(args, eval.getStatements());
     }
 
     @Override
@@ -185,7 +187,7 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
         ReturnStatementNode eval =
                 new ReturnStatementNode((ExpressionNode) ctx.expr().accept(this));
 
-        return FunctionExprNode.makeAnonymousFunction(args, Collections.singletonList(eval));
+        return new FunctionExprNode(args, Collections.singletonList(eval));
     }
 
     @Override
@@ -194,7 +196,7 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
         ReturnStatementNode eval =
                 new ReturnStatementNode((ExpressionNode) ctx.expr().accept(this));
 
-        return FunctionExprNode.makeAnonymousFunction(args, Collections.singletonList(eval));
+        return new FunctionExprNode(args, Collections.singletonList(eval));
     }
 
     @Override
@@ -204,32 +206,42 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
 
     @Override
     public ExpressionNode visitBooleanExpression(BrucelangParser.BooleanExpressionContext ctx) {
-        return (ExpressionNode) ctx.boolExpr().accept(this);
+        return (ExpressionNode) ctx.linkedBoolExpr().accept(this);
     }
 
-    /**
-     * Visit a parse tree produced by the {@code fallThroughAddExpr}
-     * labeled alternative in {@link BrucelangParser#boolExpr}.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
     @Override
-    public ExpressionNode visitFallThroughAddExpr(BrucelangParser.FallThroughAddExprContext ctx) {
-        return visitAddExpr(ctx.addExpr());
+    public ExpressionNode visitFallThroughCompExpr(BrucelangParser.FallThroughCompExprContext ctx) {
+        return (ExpressionNode) ctx.compExpr().accept(this);
     }
 
-    /**
-     * Visit a parse tree produced by the {@code boolOpExpr}
-     * labeled alternative in {@link BrucelangParser#boolExpr}.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
     @Override
     public ExpressionNode visitBoolOpExpr(BrucelangParser.BoolOpExprContext ctx) {
+        if (ctx.compExpr().size() != 2) {
+            throw new RuntimeException("Wrong parse?");
+        }
+
         return new BinOpExprNode(
                 visitBoolOp(ctx.boolOp()),
-                visitAddExpr(ctx.addExpr(0)),
-                visitAddExpr(ctx.addExpr(1))
+                (ExpressionNode) ctx.compExpr(0).accept(this),
+                (ExpressionNode) ctx.compExpr(1).accept(this)
+        );
+    }
+
+    @Override
+    public ExpressionNode visitFallThroughAddExpr(BrucelangParser.FallThroughAddExprContext ctx) {
+        return (ExpressionNode) ctx.addExpr().accept(this);
+    }
+
+    @Override
+    public ExpressionNode visitCompOpExpr(BrucelangParser.CompOpExprContext ctx) {
+        if (ctx.addExpr().size() != 2) {
+            throw new RuntimeException("Wrong parse?");
+        }
+
+        return new BinOpExprNode(
+                visitCompOp(ctx.compOp()),
+                (ExpressionNode) ctx.addExpr(0).accept(this),
+                (ExpressionNode) ctx.addExpr(1).accept(this)
         );
     }
 

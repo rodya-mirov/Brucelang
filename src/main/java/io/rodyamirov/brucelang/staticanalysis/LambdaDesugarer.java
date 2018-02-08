@@ -106,12 +106,13 @@ public class LambdaDesugarer {
             // but we may also need to replace this expression!
             if (!functionDefinitionNode.isDefExpr()) {
                 // then this is anonymous, so make a new node, and insert it at the above block
-                String anonName = functionDefinitionNode.getSelfName();
-                functionDefinitionNode.setDefExpr(true);
+                String anonName = FunctionExprNode.makeAnonName();
+                VariableDeclarationNode declaration = new VariableDeclarationNode(anonName);
+                functionDefinitionNode.assignToName(declaration);
 
                 stmtListHolders.peek().insertStatementNode(
                         insertionPoints.peek().get(),
-                        new VariableDefinitionNode(anonName, functionDefinitionNode)
+                        new VariableDefinitionNode(declaration, functionDefinitionNode)
                 );
 
                 nodeReplacers.peek().replaceNode(
@@ -127,7 +128,9 @@ public class LambdaDesugarer {
                     () -> variableDefinitionNode.getVariableDeclarationNode().accept(this)
             );
 
-            variableDefinitionNode.getEvalExpr().setDefExpr(true);
+            variableDefinitionNode.getEvalExpr()
+                    .assignToName(variableDefinitionNode.getVariableDeclarationNode());
+
             replacerHelper.safePushPop(
                     node -> variableDefinitionNode.setEvalExpr((ExpressionNode) node),
                     () -> variableDefinitionNode.getEvalExpr().accept(this)
