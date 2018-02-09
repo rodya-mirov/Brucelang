@@ -1,26 +1,26 @@
 {
     {
-        let a = 12;
-        let b = 13;
+        let a: Integer = 12;
+        let b: Integer = 13;
     }
 }
 
-let x = ((a, b) => a+b)(12, 13);
+let x: Fn<Integer, Integer, Integer> = ((a: Integer, b: Integer) => a+b)(12, 13);
 
-define f(y) as {
+define f(y: NoneType): Something as {
     return (() => 54)();
 }
 
 if (true) {
-    let x = (() => 12)();
+    let x: Integer = (() => 12)();
 }
 
-define nested() as {
-    return ((a) => (() => 15)())(12);
+define nested(): ThisIsntChecked as {
+    return ((a: FooType) => (() => 15)())(12);
 }
 
-let alsoNested = () => {
-    let a = (() => { return (() => 12)(); })();
+let alsoNested: JunkType<Arg1, Arg2> = () => {
+    let a: Gragrg = (() => { return (() => 12)(); })();
 };
 
-let main = 12;
+let main: Fn<Woo> = 12;

@@ -6,7 +6,7 @@ define main() as {
 
 define f(arg) as {
     let helpful = (x => x*arg)(12);
-    let moreHelpful = ((a, b) => (a+b)-arg)(34, 55);
+    let moreHelpful = ((a, b) => (a.field+b)-arg)(34, 55);
     return helpful;
 }
 

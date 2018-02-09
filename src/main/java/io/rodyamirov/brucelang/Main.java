@@ -7,6 +7,7 @@ import io.rodyamirov.brucelang.lexparse.BrucelangParser;
 import io.rodyamirov.brucelang.staticanalysis.LambdaDesugarer;
 import io.rodyamirov.brucelang.staticanalysis.NameRegistrar;
 import io.rodyamirov.brucelang.staticanalysis.TreePrinter;
+import io.rodyamirov.brucelang.types.TypeWalker;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -36,6 +37,7 @@ public class Main {
         ProgramNode program = builder.visitProgram(parser.program());
         LambdaDesugarer.removeAnonymousFunctions(program);
         NameRegistrar.registerNames(program);
+        TypeWalker.assignAndCheckTypes(program);
         System.out.println(TreePrinter.printTree(program, true));
     }
 }

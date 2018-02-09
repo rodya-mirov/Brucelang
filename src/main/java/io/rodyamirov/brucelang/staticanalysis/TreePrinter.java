@@ -18,6 +18,7 @@ import io.rodyamirov.brucelang.ast.UnaryOpExprNode;
 import io.rodyamirov.brucelang.ast.VariableDeclarationNode;
 import io.rodyamirov.brucelang.ast.VariableDefinitionNode;
 import io.rodyamirov.brucelang.ast.VariableReferenceNode;
+import io.rodyamirov.brucelang.types.TypeDeclaration;
 import io.rodyamirov.brucelang.util.collections.ArrayStack;
 import io.rodyamirov.brucelang.util.collections.Stack;
 
@@ -128,6 +129,9 @@ public class TreePrinter {
         @Override
         public void visitVariableDeclaration(VariableDeclarationNode variableDeclarationNode) {
             stringBuilder.append(variableDeclarationNode.getVarName());
+            stringBuilder.append(": ");
+
+            variableDeclarationNode.getType().writePrettyString(stringBuilder);
         }
 
         @Override
