@@ -1,0 +1,29 @@
+define main(): Integer as {
+    let x: Integer = 13 + 14;
+    let y: Integer = 13 * (x - f(12));
+    return x - g(y) * chomp(18);
+}
+
+define f(arg: Integer): Integer as {
+    let helpful: Integer = (x: Integer => x*arg)(12);
+    let moreHelpful: Integer = ((a: Integer, b: Integer) => (a/b)-arg)(34, 55);
+    return helpful;
+}
+
+let chomp: Fn<Integer, Integer> = food: Integer =>
+    (a: Integer => {
+        let x: Integer = 12;
+        return a + x;
+    })(food);
+
+let curry: Fn<Fn<Integer, Integer, Integer, Integer, Integer>, Fn<Integer, Integer>>
+        = func: Fn<Integer, Integer, Integer, Integer, Integer> => (x: Integer => func(x, 2, 3, 4));
+
+define g(zed: Integer): Integer as {
+    define h(a: Integer, b: Integer, c: Integer, d: Integer): Integer as {
+        return a + b + f(c + d);
+    }
+
+    let curryPowder: Fn<Integer, Integer> = curry(h);
+    return curryPowder(f(1));
+}

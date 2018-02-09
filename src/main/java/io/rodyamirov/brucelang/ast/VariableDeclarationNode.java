@@ -1,18 +1,29 @@
 package io.rodyamirov.brucelang.ast;
 
-import static io.rodyamirov.brucelang.types.UnknownType.UNKNOWN_TYPE;
+import io.rodyamirov.brucelang.types.TypeDeclaration;
 
-public final class VariableDeclarationNode extends TypedNode {
-    private final String varName;
+import javax.annotation.Nonnull;
 
-    public VariableDeclarationNode(String varName) {
-        super(UNKNOWN_TYPE);
+public final class VariableDeclarationNode extends ASTNode implements Typed {
+        private final String varName;
+    private TypeDeclaration typeDeclaration;
 
+    public VariableDeclarationNode(String varName, @Nonnull TypeDeclaration typeDeclaration) {
         this.varName = varName;
+        this.typeDeclaration = typeDeclaration;
     }
 
     public String getVarName() {
         return varName;
+    }
+
+    public TypeDeclaration getType() {
+        return typeDeclaration;
+    }
+
+    @Override
+    public void setType(TypeDeclaration type) {
+        this.typeDeclaration = type;
     }
 
     @Override

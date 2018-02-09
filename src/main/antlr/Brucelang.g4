@@ -29,16 +29,30 @@ ifStmt
     ;
 
 varDef
-    : LET ID '=' expr ';'
+    : LET varDecl '=' expr ';'
     ;
 
 fnDef
-    : DEFINE ID '(' idList ')' AS blockStmt
+    : DEFINE ID '(' varDeclList ')' ':' typeExpr AS blockStmt
     ;
 
-idList
-    :                # noIds
-    | ID (',' ID)*   # someIds
+varDecl
+    : ID ':' typeExpr
+    ;
+
+varDeclList
+    :                           # noVarDecls
+    | varDecl (',' varDecl)*    # someVarDecls
+    ;
+
+typeExpr
+    : ID                        # simpleType
+    | ID '<' typeExprList '>'   # complexType
+    ;
+
+typeExprList
+    :                           # noTypes
+    | typeExpr (',' typeExpr)*  # someTypes
     ;
 
 exprList
@@ -52,10 +66,10 @@ expr // top-level expression class
     ;
 
 lambda
-    : ID '=>' blockStmt                # oneArgLambda
-    | '(' idList ')' '=>' blockStmt    # multiArgLambda
-    | ID '=>' expr                     # oneArgExprLambda
-    | '(' idList ')' '=>' expr         # multiArgExprLambda
+    : varDecl '=>' blockStmt                # oneArgLambda
+    | '(' varDeclList ')' '=>' blockStmt    # multiArgLambda
+    | varDecl '=>' expr                     # oneArgExprLambda
+    | '(' varDeclList ')' '=>' expr         # multiArgExprLambda
     ;
 
 linkedBoolExpr

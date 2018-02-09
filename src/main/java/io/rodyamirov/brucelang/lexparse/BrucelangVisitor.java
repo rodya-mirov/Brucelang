@@ -55,19 +55,53 @@ public interface BrucelangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFnDef(BrucelangParser.FnDefContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code noIds}
-	 * labeled alternative in {@link BrucelangParser#idList}.
+	 * Visit a parse tree produced by {@link BrucelangParser#varDecl}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitNoIds(BrucelangParser.NoIdsContext ctx);
+	T visitVarDecl(BrucelangParser.VarDeclContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code someIds}
-	 * labeled alternative in {@link BrucelangParser#idList}.
+	 * Visit a parse tree produced by the {@code noVarDecls}
+	 * labeled alternative in {@link BrucelangParser#varDeclList}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitSomeIds(BrucelangParser.SomeIdsContext ctx);
+	T visitNoVarDecls(BrucelangParser.NoVarDeclsContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code someVarDecls}
+	 * labeled alternative in {@link BrucelangParser#varDeclList}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSomeVarDecls(BrucelangParser.SomeVarDeclsContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code simpleType}
+	 * labeled alternative in {@link BrucelangParser#typeExpr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSimpleType(BrucelangParser.SimpleTypeContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code complexType}
+	 * labeled alternative in {@link BrucelangParser#typeExpr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitComplexType(BrucelangParser.ComplexTypeContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code noTypes}
+	 * labeled alternative in {@link BrucelangParser#typeExprList}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNoTypes(BrucelangParser.NoTypesContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code someTypes}
+	 * labeled alternative in {@link BrucelangParser#typeExprList}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSomeTypes(BrucelangParser.SomeTypesContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code noExprs}
 	 * labeled alternative in {@link BrucelangParser#exprList}.

@@ -2,6 +2,10 @@ package io.rodyamirov.brucelang.ast;
 
 import io.rodyamirov.brucelang.lexparse.BrucelangParser;
 import io.rodyamirov.brucelang.lexparse.BrucelangVisitor;
+import io.rodyamirov.brucelang.types.ComplexTypeDeclaration;
+import io.rodyamirov.brucelang.types.SimpleTypeDeclaration;
+import io.rodyamirov.brucelang.types.StandardTypeDeclarations;
+import io.rodyamirov.brucelang.types.TypeDeclaration;
 import io.rodyamirov.brucelang.util.ProgrammerError;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
@@ -108,7 +112,7 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
      */
     @Override
     public VariableDefinitionNode visitVarDef(BrucelangParser.VarDefContext ctx) {
-        VariableDeclarationNode declarationNode = new VariableDeclarationNode(ctx.ID().getText());
+        VariableDeclarationNode declarationNode = (VariableDeclarationNode) ctx.varDecl().accept(this);
         ExpressionNode definition = (ExpressionNode) ctx.expr().accept(this);
         definition.assignToName(declarationNode);
 
@@ -121,16 +125,70 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
      * @return the visitor result
      */
     @Override
-    public StatementNode visitFnDef(BrucelangParser.FnDefContext ctx) {
-        VariableDeclarationNode declarationNode = new VariableDeclarationNode(ctx.ID().getText());
+    public VariableDefinitionNode visitFnDef(BrucelangParser.FnDefContext ctx) {
 
         FunctionExprNode definition = new FunctionExprNode(
-                visitIdList(ctx.idList()),
+                (List<VariableDeclarationNode>) ctx.varDeclList().accept(this),
                 visitBlockStmt(ctx.blockStmt()).getStatements()
         );
 
+        TypeDeclaration typeDeclaration = StandardTypeDeclarations.makeFunctionType(
+                definition.getParameterNodes().stream()
+                        .map(param -> param.getType())
+                        .collect(Collectors.toList()),
+                (TypeDeclaration) ctx.typeExpr().accept(this)
+        );
+
+        VariableDeclarationNode declarationNode = new VariableDeclarationNode(
+                ctx.ID().getText(), typeDeclaration);
+
         definition.assignToName(declarationNode);
         return new VariableDefinitionNode(declarationNode, definition);
+    }
+
+    @Override
+    public VariableDeclarationNode visitVarDecl(BrucelangParser.VarDeclContext ctx) {
+        String name = ctx.ID().getText();
+        TypeDeclaration type = (TypeDeclaration) ctx.typeExpr().accept(this);
+
+        return new VariableDeclarationNode(name, type);
+    }
+
+    @Override
+    public List<VariableDeclarationNode> visitNoVarDecls(BrucelangParser.NoVarDeclsContext ctx) {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<VariableDeclarationNode> visitSomeVarDecls(BrucelangParser.SomeVarDeclsContext ctx) {
+        return ctx.varDecl().stream()
+                .map(vd -> (VariableDeclarationNode) vd.accept(this))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public SimpleTypeDeclaration visitSimpleType(BrucelangParser.SimpleTypeContext ctx) {
+        return new SimpleTypeDeclaration(ctx.ID().getText());
+    }
+
+    @Override
+    public ComplexTypeDeclaration visitComplexType(BrucelangParser.ComplexTypeContext ctx) {
+        String name = ctx.ID().getText();
+        List<TypeDeclaration> args = (List<TypeDeclaration>) ctx.typeExprList().accept(this);
+
+        return new ComplexTypeDeclaration(name, args);
+    }
+
+    @Override
+    public List<TypeDeclaration> visitNoTypes(BrucelangParser.NoTypesContext ctx) {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<TypeDeclaration> visitSomeTypes(BrucelangParser.SomeTypesContext ctx) {
+        return ctx.typeExpr().stream()
+                .map(vd -> (TypeDeclaration) vd.accept(this))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -145,26 +203,10 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
                 .collect(Collectors.toList());
     }
 
-    private List<VariableDeclarationNode> visitIdList(BrucelangParser.IdListContext ctx) {
-        return (List<VariableDeclarationNode>) ctx.accept(this);
-    }
-
     @Override
-    public List<VariableDeclarationNode> visitNoIds(BrucelangParser.NoIdsContext ctx) {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public List<VariableDeclarationNode> visitSomeIds(BrucelangParser.SomeIdsContext ctx) {
-        return ctx.ID().stream()
-                .map(node -> new VariableDeclarationNode(node.getText()))
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public Object visitOneArgLambda(BrucelangParser.OneArgLambdaContext ctx) {
+    public FunctionExprNode visitOneArgLambda(BrucelangParser.OneArgLambdaContext ctx) {
         List<VariableDeclarationNode> args = Collections.singletonList(
-                new VariableDeclarationNode(ctx.ID().getText())
+                (VariableDeclarationNode) ctx.varDecl().accept(this)
         );
         BlockStatementNode eval = this.visitBlockStmt(ctx.blockStmt());
 
@@ -172,17 +214,18 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
     }
 
     @Override
-    public Object visitMultiArgLambda(BrucelangParser.MultiArgLambdaContext ctx) {
-        List<VariableDeclarationNode> args = this.visitIdList(ctx.idList());
+    public FunctionExprNode visitMultiArgLambda(BrucelangParser.MultiArgLambdaContext ctx) {
+        List<VariableDeclarationNode> args =
+                (List<VariableDeclarationNode>) ctx.varDeclList().accept(this);
         BlockStatementNode eval = this.visitBlockStmt(ctx.blockStmt());
 
         return new FunctionExprNode(args, eval.getStatements());
     }
 
     @Override
-    public Object visitOneArgExprLambda(BrucelangParser.OneArgExprLambdaContext ctx) {
+    public FunctionExprNode visitOneArgExprLambda(BrucelangParser.OneArgExprLambdaContext ctx) {
         List<VariableDeclarationNode> args = Collections.singletonList(
-                new VariableDeclarationNode(ctx.ID().getText())
+                (VariableDeclarationNode) ctx.varDecl().accept(this)
         );
         ReturnStatementNode eval =
                 new ReturnStatementNode((ExpressionNode) ctx.expr().accept(this));
@@ -191,8 +234,10 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
     }
 
     @Override
-    public Object visitMultiArgExprLambda(BrucelangParser.MultiArgExprLambdaContext ctx) {
-        List<VariableDeclarationNode> args = this.visitIdList(ctx.idList());
+    public FunctionExprNode visitMultiArgExprLambda(BrucelangParser.MultiArgExprLambdaContext ctx) {
+        List<VariableDeclarationNode> args =
+                (List<VariableDeclarationNode>) ctx.varDeclList().accept(this);
+
         ReturnStatementNode eval =
                 new ReturnStatementNode((ExpressionNode) ctx.expr().accept(this));
 
@@ -252,7 +297,6 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
      */
     @Override
     public ExpressionNode visitAddExpr(BrucelangParser.AddExprContext ctx) {
-        // TODO: currently this is chained as binary operations -- but maybe we could improve it
         ExpressionNode current = visitMulExpr(ctx.mulExpr(0));
 
         for (int i = 1; i < ctx.mulExpr().size(); i++) {
@@ -273,8 +317,6 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
      */
     @Override
     public ExpressionNode visitMulExpr(BrucelangParser.MulExprContext ctx) {
-        // TODO: currently this is chained as binary operations -- but maybe we could improve it
-
         ExpressionNode current = (ExpressionNode) ctx.unaryExpr(0).accept(this);
 
         for (int i = 1; i < ctx.unaryExpr().size(); i++) {

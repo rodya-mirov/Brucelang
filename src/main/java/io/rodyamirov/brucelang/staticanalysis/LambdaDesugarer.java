@@ -20,11 +20,15 @@ import io.rodyamirov.brucelang.ast.UnaryOpExprNode;
 import io.rodyamirov.brucelang.ast.VariableDeclarationNode;
 import io.rodyamirov.brucelang.ast.VariableDefinitionNode;
 import io.rodyamirov.brucelang.ast.VariableReferenceNode;
+import io.rodyamirov.brucelang.types.SimpleTypeDeclaration;
+import io.rodyamirov.brucelang.types.StandardTypeDeclarations;
 import io.rodyamirov.brucelang.util.collections.ArrayStack;
 import io.rodyamirov.brucelang.util.collections.Stack;
 import io.rodyamirov.brucelang.util.collections.StackHelper;
 
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static io.rodyamirov.brucelang.types.StandardTypeDeclarations.INFERRED;
 
 /**
  * A desugarer class which replaces anonymous functions (that is, lambdas which are defined but not
@@ -107,7 +111,8 @@ public class LambdaDesugarer {
             if (!functionDefinitionNode.isDefExpr()) {
                 // then this is anonymous, so make a new node, and insert it at the above block
                 String anonName = FunctionExprNode.makeAnonName();
-                VariableDeclarationNode declaration = new VariableDeclarationNode(anonName);
+                VariableDeclarationNode declaration = new VariableDeclarationNode(anonName,
+                        StandardTypeDeclarations.makeInferredType());
                 functionDefinitionNode.assignToName(declaration);
 
                 stmtListHolders.peek().insertStatementNode(
