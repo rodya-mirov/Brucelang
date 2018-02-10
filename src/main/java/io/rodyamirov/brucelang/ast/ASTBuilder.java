@@ -48,6 +48,8 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
             return visitVarDef(ctx.varDef());
         } else if (ctx.returnStmt() != null) {
             return visitReturnStmt(ctx.returnStmt());
+        } else if (ctx.doStmt() != null) {
+            return visitDoStmt(ctx.doStmt());
         } else {
             throw new ProgrammerError("Unrecognized statement context subrule: '%s'", ctx);
         }
@@ -63,6 +65,18 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
         ExpressionNode evalExpression = (ExpressionNode) ctx.expr().accept(this);
 
         return new ReturnStatementNode(evalExpression);
+    }
+
+    /**
+     * Visit a parse tree produced by {@link BrucelangParser#doStmt}.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    @Override
+    public DoStatementNode visitDoStmt(BrucelangParser.DoStmtContext ctx) {
+        ExpressionNode evalExpression = (ExpressionNode) ctx.expr().accept(this);
+
+        return new DoStatementNode(evalExpression);
     }
 
     /**
@@ -412,17 +426,6 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
             // ProgrammerError because the parser/lexer grammar should guarantee this is possible
             throw new ProgrammerError("Could not parse '%s' as integer", toParse);
         }
-    }
-
-    /**
-     * Visit a parse tree produced by the {@code stringConst}
-     * labeled alternative in {@link BrucelangParser#baseExpr}.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    @Override
-    public StringExprNode visitStringConst(BrucelangParser.StringConstContext ctx) {
-        return new StringExprNode(ctx.STRING_CONST().getText());
     }
 
     /**
