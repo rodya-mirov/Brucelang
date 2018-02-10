@@ -31,6 +31,12 @@ public interface BrucelangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitReturnStmt(BrucelangParser.ReturnStmtContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link BrucelangParser#doStmt}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDoStmt(BrucelangParser.DoStmtContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link BrucelangParser#blockStmt}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -254,13 +260,6 @@ public interface BrucelangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitNumConst(BrucelangParser.NumConstContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code stringConst}
-	 * labeled alternative in {@link BrucelangParser#baseExpr}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitStringConst(BrucelangParser.StringConstContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code boolConst}
 	 * labeled alternative in {@link BrucelangParser#baseExpr}.

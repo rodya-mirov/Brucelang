@@ -20,6 +20,7 @@ import io.rodyamirov.brucelang.ast.UnaryOpExprNode;
 import io.rodyamirov.brucelang.ast.VariableDeclarationNode;
 import io.rodyamirov.brucelang.ast.VariableDefinitionNode;
 import io.rodyamirov.brucelang.ast.VariableReferenceNode;
+import io.rodyamirov.brucelang.astexceptions.WrongOrderException;
 import io.rodyamirov.brucelang.astexceptions.WrongTypeException;
 import io.rodyamirov.brucelang.util.collections.ArrayStack;
 import io.rodyamirov.brucelang.util.collections.Stack;
@@ -84,8 +85,8 @@ public class TypeWalker {
 
             TypeDeclaration returnType = valueHolster.get();
             if (returnType == null) {
-                // TODO: do we want to allow this? Nothing returned, probably an error
-                returnType = StandardTypeDeclarations.makeNoneType();
+                throw new WrongOrderException(functionDefinitionNode,
+                        "It should have been checked that all code paths return a value!");
             }
 
             TypeDeclaration functionType = StandardTypeDeclarations.makeFunctionType(
@@ -129,7 +130,6 @@ public class TypeWalker {
         @Override
         public void visitDoStatement(DoStatementNode doStatementNode) {
             doStatementNode.getEvalExpression().accept(this);
-            // TODO: what the hell is a do statement, do we need to typecheck it?
         }
 
         @Override

@@ -13,11 +13,16 @@ stmt // TODO: named branches
     | fnDef
     | varDef
     | returnStmt
+    | doStmt
     | ifStmt
     ;
 
 returnStmt
     : RETURN expr ';'
+    ;
+
+doStmt
+    : DO expr ';'
     ;
 
 blockStmt
@@ -105,7 +110,7 @@ baseExpr
     : '(' expr ')'                     # parenExpr
     | ID                               # variableReference
     | INT                              # numConst
-    | '"' (STRING_CONST)? '"'          # stringConst
+    // | '"' (STRING_CONST)? '"'          # stringConst // TODO: This is commented out because it's broken -- should be done at the lexer level
     | boolVal                          # boolConst
     ;
 
@@ -127,8 +132,6 @@ IS     : 'is' ;
 IF     : 'if' ;
 ELSE   : 'else' ;
 LET    : 'let' ;
-
-STRING_CONST : ([^"])+ ; // TODO: I don't think this actually works, see what happens with escaped quotes
 
 AND    : 'and' ;
 OR     : 'or' ;
