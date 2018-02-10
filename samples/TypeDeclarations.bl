@@ -1,0 +1,43 @@
+
+let native type String = {
+    length: Fn<Integer>
+}
+
+let native type Integer = {
+    toString: Fn<String>
+}
+
+let type Person = {
+    age: Integer,
+    name: String,
+    friends: List<Person>,
+    friendsNames: Fn<List<String>>
+}
+
+impl Person {
+    define new(age: Integer, name: String) as {
+        this.age = age;
+        this.name = name;
+        this.friends = new List<Person>();
+    }
+
+    define new(age: Integer, name: String, friends: List<Person>) as {
+        this.age = age;
+        this.name = name;
+        this.friends = friends;
+    }
+
+    define friendsNames() as {
+        return this.friends.map(p: Person => p.name);
+    }
+}
+
+let native type List<T> = {
+    get: Fn<Integer, T>,
+    contains: Fn<T, Boolean>,
+    push: Fn<T, None>,
+    pop: Fn<T>,
+    map<T2>: Fn<Fn<T,T2>, List<T2>>,
+    size: Fn<Integer>,
+    clear: Fn<None>
+}
