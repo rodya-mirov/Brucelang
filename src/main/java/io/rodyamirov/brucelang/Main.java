@@ -37,6 +37,7 @@ public class Main {
         ASTBuilder builder = new ASTBuilder();
         ProgramNode program = builder.visitProgram(parser.program());
         LambdaDesugarer.removeAnonymousFunctions(program);
+
         NameRegistrar.registerNames(program);
         ReturnChecker.checkFunctionsReturn(program);
         TypeWalker.assignAndCheckTypes(program);

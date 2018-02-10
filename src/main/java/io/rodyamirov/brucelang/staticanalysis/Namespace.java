@@ -11,6 +11,7 @@ import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 
 public class Namespace {
     private final Namespace parent;
@@ -81,11 +82,27 @@ public class Namespace {
         }
     }
 
+    private boolean nameIsDefined(String name) {
+        Predicate<Namespace> nameLocallyDefined = namespace ->
+            namespace.registeredNames.containsKey(name);
+
+        Namespace namespace = this;
+
+        while (namespace != null) {
+            if (nameLocallyDefined.test(namespace)) {
+                return true;
+            }
+            namespace = namespace.parent;
+        }
+
+        return false;
+    }
+
     public void register(String name, VariableDeclarationNode definitionNode) {
-        if (registeredNames.containsKey(name)) {
+        if (nameIsDefined(name)) {
             throw new DoubleDefinitionException(
                     definitionNode,
-                    "Name '%s' is already in use in '%s'",
+                    "Name '%s' in '%s' is already in use!",
                     name, this.getFullName()
             );
         }

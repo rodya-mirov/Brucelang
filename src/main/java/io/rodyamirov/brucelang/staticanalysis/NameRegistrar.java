@@ -21,7 +21,10 @@ import io.rodyamirov.brucelang.ast.VariableDefinitionNode;
 import io.rodyamirov.brucelang.ast.VariableReferenceNode;
 import io.rodyamirov.brucelang.util.ProgrammerError;
 import io.rodyamirov.brucelang.util.collections.ArrayStack;
+import io.rodyamirov.brucelang.util.collections.LinkedQueue;
+import io.rodyamirov.brucelang.util.collections.Queue;
 import io.rodyamirov.brucelang.util.collections.Stack;
+import io.rodyamirov.brucelang.util.collections.StackHelper;
 
 /**
  * Visitor which associates references (to functions and variables) with the declarations
@@ -40,50 +43,62 @@ public final class NameRegistrar {
      * @return
      */
     public static void registerNames(ProgramNode programNode) {
-        new RegistrarVisitor().visitProgram(programNode);
+        Namespace root = new Namespace("global");
+        Queue<Visitable> toProcess = new LinkedQueue<>();
+        toProcess.enqueue(new Visitable(programNode, root));
+
+        while (toProcess.size() > 0) {
+            Visitable toVisit = toProcess.dequeue();
+
+            toVisit.nodeToVisit.accept(new RegistrarVisitor(toProcess, toVisit.context));
+        }
+    }
+
+    private static class Visitable {
+        final ASTNode nodeToVisit;
+        final Namespace context;
+
+        public Visitable(ASTNode nodeToVisit, Namespace context) {
+            this.nodeToVisit = nodeToVisit;
+            this.context = context;
+        }
     }
 
     private static class RegistrarVisitor implements ASTNode.ASTVisitor {
-        private final Stack<Namespace> namespaceStack = new ArrayStack<>();
+        private final Queue<Visitable> toProcess;
+        private final Namespace currentContext;
+
+        public RegistrarVisitor(Queue<Visitable> toProcess, Namespace currentContext) {
+            this.toProcess = toProcess;
+            this.currentContext = currentContext;
+        }
 
         @Override
         public void visitProgram(ProgramNode programNode) {
-            namespaceStack.clear();
-
-            Namespace root = new Namespace("global");
-            programNode.setNamespace(root);
-
-            namespaceStack.push(root);
+            programNode.setNamespace(currentContext);
 
             programNode.getStatements()
                     .forEach(node -> node.accept(this));
-
-            namespaceStack.pop();
-
-            if (namespaceStack.size() > 0) {
-                throw new ProgrammerError("Something wasn't popping its stack properly!");
-            }
         }
 
         @Override
         public void visitFunctionExpr(FunctionExprNode functionDefinitionNode) {
-            Namespace localSpace = namespaceStack.peek();
-            functionDefinitionNode.setNamespace(localSpace);
+            functionDefinitionNode.setNamespace(currentContext);
 
-            Namespace functionSpace = localSpace.makeFunctionChild(functionDefinitionNode);
+            Namespace functionSpace = currentContext.makeFunctionChild(functionDefinitionNode);
 
-            namespaceStack.push(functionSpace);
+            for (VariableDeclarationNode vdn : functionDefinitionNode.getParameterNodes()) {
+                toProcess.enqueue(new Visitable(vdn, functionSpace));
+            }
 
-            functionDefinitionNode.getParameterNodes().forEach(this::visitVariableDeclaration);
-            functionDefinitionNode.getDefinitionStatements().forEach(node -> node.accept(this));
-
-            namespaceStack.pop();
+            for (StatementNode stmt : functionDefinitionNode.getDefinitionStatements()) {
+                toProcess.enqueue(new Visitable(stmt, functionSpace));
+            }
         }
 
         @Override
         public void visitVariableDefinition(VariableDefinitionNode variableDefinitionNode) {
-            Namespace localSpace = namespaceStack.peek();
-            variableDefinitionNode.setNamespace(localSpace);
+            variableDefinitionNode.setNamespace(currentContext);
 
             variableDefinitionNode.getVariableDeclarationNode().accept(this);
             variableDefinitionNode.getEvalExpr().accept(this);
@@ -91,44 +106,39 @@ public final class NameRegistrar {
 
         @Override
         public void visitVariableDeclaration(VariableDeclarationNode variableDeclarationNode) {
-            Namespace localSpace = namespaceStack.peek();
-            variableDeclarationNode.setNamespace(localSpace);
+            variableDeclarationNode.setNamespace(currentContext);
 
-            localSpace.register(variableDeclarationNode.getVarName(), variableDeclarationNode);
+            currentContext.register(variableDeclarationNode.getVarName(), variableDeclarationNode);
         }
 
         @Override
         public void visitBlockStatement(BlockStatementNode blockStatementNode) {
-            Namespace localSpace = namespaceStack.peek();
-            blockStatementNode.setNamespace(localSpace);
+            blockStatementNode.setNamespace(currentContext);
 
-            namespaceStack.push(localSpace.makeBlockChild());
+            Namespace blockSpace = currentContext.makeBlockChild();
 
-            blockStatementNode.getStatements().forEach(node -> node.accept(this));
-
-            namespaceStack.pop();
+            for (StatementNode stmt : blockStatementNode.getStatements()) {
+                toProcess.enqueue(new Visitable(stmt, blockSpace));
+            }
         }
 
         @Override
         public void visitDoStatement(DoStatementNode doStatementNode) {
-            Namespace localSpace = namespaceStack.peek();
-            doStatementNode.setNamespace(localSpace);
+            doStatementNode.setNamespace(currentContext);
 
             doStatementNode.getEvalExpression().accept(this);
         }
 
         @Override
         public void visitReturnStatement(ReturnStatementNode returnStatementNode) {
-            Namespace localSpace = namespaceStack.peek();
-            returnStatementNode.setNamespace(localSpace);
+            returnStatementNode.setNamespace(currentContext);
 
             returnStatementNode.getEvalExpression().accept(this);
         }
 
         @Override
         public void visitIfStatement(IfStatementNode ifStatementNode) {
-            Namespace localSpace = namespaceStack.peek();
-            ifStatementNode.setNamespace(localSpace);
+            ifStatementNode.setNamespace(currentContext);
 
             ifStatementNode.getConditions().forEach(node -> node.accept(this));
             ifStatementNode.getResultingStatements().forEach(node -> node.accept(this));
@@ -141,8 +151,7 @@ public final class NameRegistrar {
 
         @Override
         public void visitFunctionCallNode(FunctionCallNode functionCallNode) {
-            Namespace localSpace = namespaceStack.peek();
-            functionCallNode.setNamespace(localSpace);
+            functionCallNode.setNamespace(currentContext);
 
             functionCallNode.getFunctionNode().accept(this);
             functionCallNode.getArguments().forEach(node -> node.accept(this));
@@ -150,8 +159,7 @@ public final class NameRegistrar {
 
         @Override
         public void visitFieldAccess(FieldAccessNode fieldAccessNode) {
-            Namespace localSpace = namespaceStack.peek();
-            fieldAccessNode.setNamespace(localSpace);
+            fieldAccessNode.setNamespace(currentContext);
 
             fieldAccessNode.getBaseNode().accept(this);
             // NB: we're not registering that this thing has a field, here; it's not a unique name
@@ -160,8 +168,7 @@ public final class NameRegistrar {
 
         @Override
         public void visitBinOpExprNode(BinOpExprNode binOpExprNode) {
-            Namespace localSpace = namespaceStack.peek();
-            binOpExprNode.setNamespace(localSpace);
+            binOpExprNode.setNamespace(currentContext);
 
             binOpExprNode.getLeftChild().accept(this);
             binOpExprNode.getRightChild().accept(this);
@@ -169,40 +176,37 @@ public final class NameRegistrar {
 
         @Override
         public void visitUnaryOpExprNode(UnaryOpExprNode unaryOpExprNode) {
-            Namespace localSpace = namespaceStack.peek();
-            unaryOpExprNode.setNamespace(localSpace);
+            unaryOpExprNode.setNamespace(currentContext);
 
             unaryOpExprNode.getChild().accept(this);
         }
 
         @Override
         public void visitIntExprNode(IntExprNode integerNode) {
-            Namespace localSpace = namespaceStack.peek();
-            integerNode.setNamespace(localSpace);
+            integerNode.setNamespace(currentContext);
 
             // no children
         }
 
         @Override
         public void visitBoolExprNode(BoolExprNode booleanNode) {
-            Namespace localSpace = namespaceStack.peek();
-            booleanNode.setNamespace(localSpace);
+            booleanNode.setNamespace(currentContext);
 
             // no children
         }
 
         @Override
         public void visitStringExprNode(StringExprNode stringExprNode) {
-            Namespace localSpace = namespaceStack.peek();
-            stringExprNode.setNamespace(localSpace);
+            stringExprNode.setNamespace(currentContext);
 
             // no children
         }
 
         @Override
         public void visitVariableReferenceNode(VariableReferenceNode variableReferenceNode) {
-            Namespace localSpace = namespaceStack.peek();
-            variableReferenceNode.setNamespace(localSpace);
+            variableReferenceNode.setNamespace(currentContext);
+
+            // no children
         }
     }
 }
