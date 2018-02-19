@@ -1,5 +1,8 @@
 package io.rodyamirov.brucelang.ast;
 
+import java.util.Collections;
+import java.util.List;
+
 public class FieldAccessNode extends ExpressionNode {
     private ExpressionNode baseNode;
     private final String fieldName;
@@ -24,5 +27,10 @@ public class FieldAccessNode extends ExpressionNode {
     @Override
     public void accept(ASTVisitor visitor) {
         visitor.visitFieldAccess(this);
+    }
+
+    @Override
+    public List<ExpressionNode> getChildren() {
+        return Collections.singletonList(baseNode);
     }
 }

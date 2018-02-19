@@ -3,6 +3,8 @@ package io.rodyamirov.brucelang.ast;
 import io.rodyamirov.brucelang.types.TypeDeclaration;
 
 import javax.annotation.Nonnull;
+import java.util.Collections;
+import java.util.List;
 
 public final class VariableDeclarationNode extends ASTNode implements Typed {
         private final String varName;
@@ -33,5 +35,10 @@ public final class VariableDeclarationNode extends ASTNode implements Typed {
 
     public String getCanonicalName() {
         return getNamespace().getFullName() + "." + getVarName();
+    }
+
+    @Override
+    public List<ASTNode> getChildren() {
+        return Collections.emptyList();
     }
 }

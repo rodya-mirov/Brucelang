@@ -8,6 +8,7 @@ import io.rodyamirov.brucelang.util.ProgrammerError;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -54,6 +55,10 @@ public class Namespace {
         return depth;
     }
 
+    public Collection<Namespace> getChildSpaces() {
+        return childSpaces.values();
+    }
+
     /**
      * Make a new child scope, with an anonymous name of the form $n where n is some integer.
      */
@@ -82,7 +87,11 @@ public class Namespace {
         }
     }
 
-    private boolean nameIsDefined(String name) {
+    public Collection<String> getLocalNames() {
+        return registeredNames.keySet();
+    }
+
+    public boolean nameIsDefined(String name) {
         Predicate<Namespace> nameLocallyDefined = namespace ->
             namespace.registeredNames.containsKey(name);
 
@@ -98,16 +107,26 @@ public class Namespace {
         return false;
     }
 
-    public void register(String name, VariableDeclarationNode definitionNode) {
-        if (nameIsDefined(name)) {
+    /**
+     * Register the given node.
+     *
+     * Note that this does not check for shadowing, although it will blow up if the same name is
+     * registered twice in the same namespace.
+     *
+     * @param declarationNode VariableDeclarationNode to be registered
+     */
+    public void register(VariableDeclarationNode declarationNode) {
+        String name = declarationNode.getVarName();
+
+        if (registeredNames.containsKey(name)) {
             throw new DoubleDefinitionException(
-                    definitionNode,
+                    declarationNode,
                     "Name '%s' in '%s' is already in use!",
                     name, this.getFullName()
             );
         }
 
-        registeredNames.put(name, definitionNode);
+        registeredNames.put(name, declarationNode);
     }
 
     @Nonnull

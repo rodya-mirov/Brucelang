@@ -1,6 +1,5 @@
 package io.rodyamirov.brucelang.staticanalysis;
 
-import io.rodyamirov.brucelang.ast.ASTNode;
 import io.rodyamirov.brucelang.ast.BinOpExprNode;
 import io.rodyamirov.brucelang.ast.BlockStatementNode;
 import io.rodyamirov.brucelang.ast.BoolExprNode;
@@ -19,18 +18,19 @@ import io.rodyamirov.brucelang.ast.VariableDeclarationNode;
 import io.rodyamirov.brucelang.ast.VariableDefinitionNode;
 import io.rodyamirov.brucelang.ast.VariableReferenceNode;
 import io.rodyamirov.brucelang.astexceptions.AstException;
+import io.rodyamirov.brucelang.astwalkers.ASTWalker;
+import io.rodyamirov.brucelang.astwalkers.DefaultASTWalker;
+import io.rodyamirov.brucelang.astwalkers.Walker;
 import io.rodyamirov.brucelang.util.collections.ArrayStack;
 import io.rodyamirov.brucelang.util.collections.Stack;
-import io.rodyamirov.brucelang.util.collections.StackHelper;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ReturnChecker {
     private ReturnChecker() {
     }
 
     public static void checkFunctionsReturn(ProgramNode programNode) {
-        new ReturnVisitor().visitProgram(programNode);
+        new Walker().withWalker(new ReturnWalker()).walkTree(programNode);
+        new Walker().withWalker(new ReturnInFunctionWalker()).walkTree(programNode);
     }
 
     public static class NoReturnException extends AstException {
@@ -51,158 +51,140 @@ public class ReturnChecker {
         }
     }
 
-    private static class ReturnVisitor implements ASTNode.ASTVisitor {
-        private Stack<FunctionExprNode> functionStack = new ArrayStack<>();
-        private StackHelper<FunctionExprNode> fnStackHelper = new StackHelper<>(functionStack);
-
-        private Stack<AtomicBoolean> returnCatchers = new ArrayStack<>();
-        private StackHelper<AtomicBoolean> catcherhelper = new StackHelper<>(returnCatchers);
+    private static class ReturnInFunctionWalker extends DefaultASTWalker {
+        private final Stack<FunctionExprNode> functionExprNodeStack = new ArrayStack<>();
 
         @Override
-        public void visitProgram(ProgramNode programNode) {
-            programNode.getStatements().forEach(statementNode -> statementNode.accept(this));
+        public void returnWalk(WalkFunctions<ReturnStatementNode> walkFunctions) {
+            walkFunctions.preWalker(returnStatementNode -> {
+                if (functionExprNodeStack.size() == 0) {
+                    throw new ReturnNotInFunctionException(returnStatementNode);
+                }
+            });
         }
 
         @Override
-        public void visitFunctionExpr(FunctionExprNode functionDefinitionNode) {
-            AtomicBoolean didReturn = new AtomicBoolean(false);
+        public void functionExprWalk(WalkFunctions<FunctionExprNode> walkFunctions) {
+            walkFunctions.preWalker(functionExprNodeStack::push);
+            walkFunctions.postWalker(functionExprNode -> functionExprNodeStack.pop());
+        }
+    }
 
-            functionDefinitionNode.getParameterNodes().forEach(node -> node.accept(this));
+    private static class ReturnWalker implements ASTWalker {
+        private void doesNotReturn(StatementNode statementNode) {
+            statementNode.setReturns(false);
+        }
 
-            catcherhelper.safePushPop(
-                    didReturn,
-                    () -> fnStackHelper.safePushPop(
-                            functionDefinitionNode,
-                            () -> functionDefinitionNode.getDefinitionStatements()
-                                    .forEach(statementNode -> statementNode.accept(this))
-                    )
-            );
-
-            if (!didReturn.get()) {
-                throw new NoReturnException(functionDefinitionNode);
-            }
+        private void doesReturn(StatementNode statementNode) {
+            statementNode.setReturns(true);
         }
 
         @Override
-        public void visitVariableDefinition(VariableDefinitionNode variableDefinitionNode) {
-            if (returnCatchers.size() > 0 && returnCatchers.peek().get()) {
-                throw new UnreachableCodeException(variableDefinitionNode);
-            }
-
-            variableDefinitionNode.getVariableDeclarationNode().accept(this);
-            variableDefinitionNode.getEvalExpr().accept(this);
+        public void programWalk(WalkFunctions<ProgramNode> walkFunctions) {
         }
 
         @Override
-        public void visitVariableDeclaration(VariableDeclarationNode variableDeclarationNode) {
-            // no op, terminal node
+        public void functionExprWalk(WalkFunctions<FunctionExprNode> walkFunctions) {
+            walkFunctions.postWalker(functionExprNode -> {
+                boolean doesReturn = false;
+
+                for (StatementNode statementNode : functionExprNode.getDefinitionStatements()) {
+                    if (doesReturn) {
+                        throw new UnreachableCodeException(statementNode);
+                    }
+
+                    doesReturn = statementNode.doesReturn();
+                }
+
+                if (!doesReturn) {
+                    throw new NoReturnException(functionExprNode);
+                }
+            });
         }
 
         @Override
-        public void visitBlockStatement(BlockStatementNode blockStatementNode) {
-            if (returnCatchers.size() > 0 && returnCatchers.peek().get()) {
-                throw new UnreachableCodeException(blockStatementNode);
-            }
-
-            blockStatementNode.getStatements().forEach(stmt -> stmt.accept(this));
+        public void varDefnWalk(WalkFunctions<VariableDefinitionNode> walkFunctions) {
+            walkFunctions.postWalker(this::doesNotReturn);
         }
 
         @Override
-        public void visitDoStatement(DoStatementNode doStatementNode) {
-            if (returnCatchers.size() > 0 && returnCatchers.peek().get()) {
-                throw new UnreachableCodeException(doStatementNode);
-            }
-
-            doStatementNode.getEvalExpression().accept(this);
+        public void varDeclWalk(WalkFunctions<VariableDeclarationNode> walkFunctions) {
         }
 
         @Override
-        public void visitReturnStatement(ReturnStatementNode returnStatementNode) {
-            if (functionStack.size() == 0) {
-                throw new ReturnNotInFunctionException(returnStatementNode);
-            }
-
-            if (returnCatchers.size() > 0 && returnCatchers.peek().get()) {
-                throw new UnreachableCodeException(returnStatementNode);
-            }
-
-            returnCatchers.peek().set(true);
+        public void returnWalk(WalkFunctions<ReturnStatementNode> walkFunctions) {
+            walkFunctions.postWalker(this::doesReturn);
         }
 
         @Override
-        public void visitIfStatement(IfStatementNode ifStatementNode) {
-            if (returnCatchers.size() > 0 && returnCatchers.peek().get()) {
-                throw new UnreachableCodeException(ifStatementNode);
-            }
-
-            // basically have to check if EVERY result block returns a value
-            boolean allReturned = true;
-
-            for (StatementNode thenStmt : ifStatementNode.getResultingStatements()) {
-                AtomicBoolean thisReturns = new AtomicBoolean(false);
-                catcherhelper.safePushPop(
-                        thisReturns,
-                        () -> thenStmt.accept(this)
-                );
-                allReturned &= thisReturns.get();
-            }
-
-            if (ifStatementNode.getElseStatement() != null) {
-                AtomicBoolean elseReturns = new AtomicBoolean(false);
-                catcherhelper.safePushPop(
-                        elseReturns,
-                        () -> ifStatementNode.getElseStatement().accept(this)
-                );
-                allReturned &= elseReturns.get();
-            } else {
-                allReturned = false;
-            }
-
-            if (returnCatchers.size() > 0 && allReturned) {
-                returnCatchers.peek().set(true);
-            }
+        public void doWalk(WalkFunctions<DoStatementNode> walkFunctions) {
+            walkFunctions.postWalker(this::doesNotReturn);
         }
 
         @Override
-        public void visitFunctionCallNode(FunctionCallNode functionCallNode) {
-            functionCallNode.getFunctionNode().accept(this);
-            functionCallNode.getArguments().forEach(expr -> expr.accept(this));
+        public void fnCallWalk(WalkFunctions<FunctionCallNode> walkFunctions) {
         }
 
         @Override
-        public void visitBinOpExprNode(BinOpExprNode binOpExprNode) {
-            binOpExprNode.getLeftChild().accept(this);
-            binOpExprNode.getRightChild().accept(this);
+        public void ifStmtWalk(WalkFunctions<IfStatementNode> walkFunctions) {
+            walkFunctions.postWalker(ifStatementNode -> {
+                if (ifStatementNode.getElseStatement() == null) {
+                    doesNotReturn(ifStatementNode);
+                } else {
+                    boolean didReturn = ifStatementNode.getElseStatement().doesReturn();
+
+                    for (StatementNode thenStmt : ifStatementNode.getResultingStatements()) {
+                        didReturn &= thenStmt.doesReturn();
+                    }
+
+                    ifStatementNode.setReturns(didReturn);
+                }
+            });
         }
 
         @Override
-        public void visitUnaryOpExprNode(UnaryOpExprNode unaryOpExprNode) {
-            unaryOpExprNode.getChild().accept(this);
+        public void binOpWalk(WalkFunctions<BinOpExprNode> walkFunctions) {
         }
 
         @Override
-        public void visitFieldAccess(FieldAccessNode fieldAccessNode) {
-            // no op, terminal node
+        public void unaryOpWalk(WalkFunctions<UnaryOpExprNode> walkFunctions) {
         }
 
         @Override
-        public void visitIntExprNode(IntExprNode integerNode) {
-            // no op, terminal node
+        public void fieldAccessWalk(WalkFunctions<FieldAccessNode> walkFunctions) {
         }
 
         @Override
-        public void visitBoolExprNode(BoolExprNode booleanNode) {
-            // no op, terminal node
+        public void intExprWalk(WalkFunctions<IntExprNode> walkFunctions) {
         }
 
         @Override
-        public void visitStringExprNode(StringExprNode stringExprNode) {
-            // no op, terminal node
+        public void boolExprWalk(WalkFunctions<BoolExprNode> walkFunctions) {
         }
 
         @Override
-        public void visitVariableReferenceNode(VariableReferenceNode variableReferenceNode) {
-            // no op, terminal node
+        public void stringExprWalk(WalkFunctions<StringExprNode> walkFunctions) {
+        }
+
+        @Override
+        public void varRefWalk(WalkFunctions<VariableReferenceNode> walkFunctions) {
+        }
+
+        @Override
+        public void blockStmtWalk(WalkFunctions<BlockStatementNode> walkFunctions) {
+            walkFunctions.postWalker(blockStatementNode -> {
+                boolean didReturn = false;
+
+                for (StatementNode child : blockStatementNode.getStatements()) {
+                    if (didReturn) {
+                        throw new UnreachableCodeException(child);
+                    }
+
+                    didReturn = child.doesReturn();
+                }
+
+                blockStatementNode.setReturns(didReturn);
+            });
         }
     }
 }

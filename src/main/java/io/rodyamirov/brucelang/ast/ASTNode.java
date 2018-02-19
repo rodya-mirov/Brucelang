@@ -4,6 +4,7 @@ import io.rodyamirov.brucelang.astexceptions.WrongOrderException;
 import io.rodyamirov.brucelang.staticanalysis.Namespace;
 
 import javax.annotation.Nonnull;
+import java.util.List;
 
 public abstract class ASTNode {
     private Namespace namespace;
@@ -12,6 +13,8 @@ public abstract class ASTNode {
     }
 
     public abstract void accept(ASTVisitor visitor);
+
+    public abstract List<? extends ASTNode> getChildren();
 
     public void setNamespace(@Nonnull Namespace namespace) {
         this.namespace = namespace;
