@@ -40,4 +40,9 @@ public final class BlockStatementNode extends StatementNode implements Statement
     public void accept(ASTVisitor visitor) {
         visitor.visitBlockStatement(this);
     }
+
+    @Override
+    public List<StatementNode> getChildren() {
+        return statements;
+    }
 }

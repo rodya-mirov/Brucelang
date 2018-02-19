@@ -1,5 +1,8 @@
 package io.rodyamirov.brucelang.ast;
 
+import java.util.Collections;
+import java.util.List;
+
 // TODO -- remove this class and replace it with a function call node
 public final class UnaryOpExprNode extends ExpressionNode {
     private final Operators.UnOp operation;
@@ -25,5 +28,10 @@ public final class UnaryOpExprNode extends ExpressionNode {
 
     public void setChild(ExpressionNode child) {
         this.child = child;
+    }
+
+    @Override
+    public List<ExpressionNode> getChildren() {
+        return Collections.singletonList(child);
     }
 }

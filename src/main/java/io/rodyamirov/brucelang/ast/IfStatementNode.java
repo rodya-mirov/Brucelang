@@ -41,4 +41,18 @@ public final class IfStatementNode extends StatementNode {
     public void accept(ASTVisitor visitor) {
         visitor.visitIfStatement(this);
     }
+
+    @Override
+    public List<? extends ASTNode> getChildren() {
+        List<ASTNode> out = new ArrayList<>(conditions.size() * 2 + (elseStatement == null ? 0 : 1));
+
+        out.addAll(conditions);
+        out.addAll(resultingStatements);
+
+        if (elseStatement != null) {
+            out.add(elseStatement);
+        }
+
+        return out;
+    }
 }

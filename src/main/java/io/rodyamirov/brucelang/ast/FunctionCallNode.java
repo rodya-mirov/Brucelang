@@ -28,4 +28,14 @@ public final class FunctionCallNode extends ExpressionNode {
     public List<ExpressionNode> getArguments() {
         return arguments;
     }
+
+    @Override
+    public List<ExpressionNode> getChildren() {
+        List<ExpressionNode> out = new ArrayList<>(arguments.size() + 1);
+
+        out.addAll(arguments);
+        out.add(functionNode);
+
+        return out;
+    }
 }

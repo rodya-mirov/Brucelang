@@ -26,4 +26,9 @@ public final class ProgramNode extends ASTNode implements StatementListHolder {
     public List<StatementNode> getStatements() {
         return statements;
     }
+
+    @Override
+    public List<StatementNode> getChildren() {
+        return statements;
+    }
 }

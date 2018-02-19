@@ -1,5 +1,8 @@
 package io.rodyamirov.brucelang.ast;
 
+import java.util.Collections;
+import java.util.List;
+
 public final class StringExprNode extends ExpressionNode {
     private final String value;
 
@@ -14,5 +17,10 @@ public final class StringExprNode extends ExpressionNode {
 
     public String getValue() {
         return value;
+    }
+
+    @Override
+    public List<ASTNode> getChildren() {
+        return Collections.emptyList();
     }
 }

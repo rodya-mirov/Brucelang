@@ -18,6 +18,7 @@ import io.rodyamirov.brucelang.ast.UnaryOpExprNode;
 import io.rodyamirov.brucelang.ast.VariableDeclarationNode;
 import io.rodyamirov.brucelang.ast.VariableDefinitionNode;
 import io.rodyamirov.brucelang.ast.VariableReferenceNode;
+import io.rodyamirov.brucelang.astwalkers.ASTWalker;
 import io.rodyamirov.brucelang.types.TypeDeclaration;
 import io.rodyamirov.brucelang.util.collections.ArrayStack;
 import io.rodyamirov.brucelang.util.collections.Stack;
@@ -54,7 +55,10 @@ public class TreePrinter {
 
     private static class PrintVisitor implements ASTNode.ASTVisitor {
         private final StringBuilder stringBuilder = new StringBuilder();
+
         private final Stack<Boolean> nextShouldIndent = new ArrayStack<>();
+        private final Stack<Boolean> nextShouldNewline = new ArrayStack<>();
+
         private final boolean excessiveParens;
 
         public PrintVisitor(boolean excessiveParens) {
@@ -147,7 +151,10 @@ public class TreePrinter {
 
             indent(blockStatementNode.getNamespace().getDepth());
             stringBuilder.append('}');
-            newline();
+
+            if (nextShouldNewline.popOr(true)) {
+                newline();
+            }
         }
 
         @Override
@@ -176,29 +183,31 @@ public class TreePrinter {
         public void visitIfStatement(IfStatementNode ifStatementNode) {
             int depth = ifStatementNode.getNamespace().getDepth();
 
-            // TODO: this does braces on the next line (gross), fix this later
             indent(depth);
             stringBuilder.append("if (");
             ifStatementNode.getConditions().get(0).accept(this);
             stringBuilder.append(") ");
             nextShouldIndent.push(false);
+            nextShouldNewline.push(false);
             ifStatementNode.getResultingStatements().get(0).accept(this);
 
             for (int i = 1; i < ifStatementNode.getConditions().size(); i++) {
-                indent(depth);
                 stringBuilder.append(" else if (");
                 ifStatementNode.getConditions().get(i).accept(this);
                 stringBuilder.append(") ");
                 nextShouldIndent.push(false);
+                nextShouldNewline.push(false);
                 ifStatementNode.getResultingStatements().get(i).accept(this);
             }
 
             if (ifStatementNode.getElseStatement() != null) {
-                indent(depth);
-                stringBuilder.append("else ");
+                stringBuilder.append(" else ");
                 nextShouldIndent.push(false);
+                nextShouldNewline.push(false);
                 ifStatementNode.getElseStatement().accept(this);
             }
+
+            newline();
         }
 
         @Override

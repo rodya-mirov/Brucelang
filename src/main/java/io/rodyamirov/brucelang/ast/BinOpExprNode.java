@@ -1,5 +1,8 @@
 package io.rodyamirov.brucelang.ast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 // TODO -- remove this class and replace it with a function call node
 public final class BinOpExprNode extends ExpressionNode {
     private final Operators.BinOp operation;
@@ -34,5 +37,15 @@ public final class BinOpExprNode extends ExpressionNode {
 
     public void setRightChild(ExpressionNode rightChild) {
         this.rightChild = rightChild;
+    }
+
+    @Override
+    public List<ExpressionNode> getChildren() {
+        List<ExpressionNode> out = new ArrayList<>(2);
+
+        out.add(leftChild);
+        out.add(rightChild);
+
+        return out;
     }
 }

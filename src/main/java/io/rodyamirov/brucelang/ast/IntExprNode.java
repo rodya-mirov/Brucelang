@@ -1,6 +1,8 @@
 package io.rodyamirov.brucelang.ast;
 
 import java.math.BigInteger;
+import java.util.Collections;
+import java.util.List;
 
 public final class IntExprNode extends ExpressionNode {
     private final BigInteger value;
@@ -16,5 +18,10 @@ public final class IntExprNode extends ExpressionNode {
 
     public BigInteger getValue() {
         return value;
+    }
+
+    @Override
+    public List<ASTNode> getChildren() {
+        return Collections.emptyList();
     }
 }

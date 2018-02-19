@@ -1,5 +1,8 @@
 package io.rodyamirov.brucelang.ast;
 
+import java.util.Collections;
+import java.util.List;
+
 public final class ReturnStatementNode extends StatementNode {
     private ExpressionNode evalExpression;
 
@@ -18,5 +21,10 @@ public final class ReturnStatementNode extends StatementNode {
     @Override
     public void accept(ASTVisitor visitor) {
         visitor.visitReturnStatement(this);
+    }
+
+    @Override
+    public List<? extends ASTNode> getChildren() {
+        return Collections.singletonList(evalExpression);
     }
 }

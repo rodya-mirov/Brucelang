@@ -45,4 +45,14 @@ public class FunctionExprNode extends ExpressionNode implements StatementListHol
         }
         return getDefinedName().getCanonicalName();
     }
+
+    @Override
+    public List<ASTNode> getChildren() {
+        List<ASTNode> out = new ArrayList<>(parameterNodes.size() + definitionStatements.size());
+
+        out.addAll(parameterNodes);
+        out.addAll(definitionStatements);
+
+        return out;
+    }
 }

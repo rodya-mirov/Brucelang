@@ -1,5 +1,8 @@
 package io.rodyamirov.brucelang.ast;
 
+import java.util.Collections;
+import java.util.List;
+
 public final class VariableReferenceNode extends ExpressionNode {
     private final String varName;
 
@@ -23,5 +26,10 @@ public final class VariableReferenceNode extends ExpressionNode {
 
     public String getCanonicalName() {
         return getDefinition().getNamespace().getFullName() + "." + varName;
+    }
+
+    @Override
+    public List<ASTNode> getChildren() {
+        return Collections.emptyList();
     }
 }
