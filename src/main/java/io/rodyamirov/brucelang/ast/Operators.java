@@ -1,9 +1,12 @@
 package io.rodyamirov.brucelang.ast;
 
+import io.rodyamirov.brucelang.evaluation.TypedValue;
 import io.rodyamirov.brucelang.types.StandardTypeDeclarations;
 import io.rodyamirov.brucelang.types.TypeDeclaration;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.math.BigInteger;
 
 import static io.rodyamirov.brucelang.types.TypeDeclaration.equalTypes;
 
@@ -21,10 +24,94 @@ public final class Operators {
         // do nothing
     }
 
+    private static void blowup() {
+        throw new RuntimeException("Invalid types! This should have been prevented by static analysis!");
+    }
+
     public enum BinOp {
         PLUS, MINUS, TIMES, DIVIDE,
         LT, LTE, GT, GTE, EQ, NEQ,
         AND, OR;
+
+        @Nonnull
+        public Object evaluate(TypedValue leftArg, TypedValue rightArg) {
+            switch (this) {
+                case PLUS:
+                    if (equalTypes(leftArg.getType(), INTEGER_TYPE) && equalTypes(rightArg.getType(), INTEGER_TYPE)) {
+                        return ((BigInteger) leftArg.getValue()).add((BigInteger) rightArg.getValue());
+                    }
+                    blowup();
+
+                case MINUS:
+                    if (equalTypes(leftArg.getType(), INTEGER_TYPE) && equalTypes(rightArg.getType(), INTEGER_TYPE)) {
+                        return ((BigInteger) leftArg.getValue()).subtract((BigInteger) rightArg.getValue());
+                    }
+                    blowup();
+
+                case TIMES:
+                    if (equalTypes(leftArg.getType(), INTEGER_TYPE) && equalTypes(rightArg.getType(), INTEGER_TYPE)) {
+                        return ((BigInteger) leftArg.getValue()).multiply((BigInteger) rightArg.getValue());
+                    }
+                    blowup();
+
+                case DIVIDE:
+                    if (equalTypes(leftArg.getType(), INTEGER_TYPE) && equalTypes(rightArg.getType(), INTEGER_TYPE)) {
+                        return ((BigInteger) leftArg.getValue()).divide((BigInteger) rightArg.getValue());
+                    }
+                    blowup();
+
+                case LT:
+                    if (equalTypes(leftArg.getType(), INTEGER_TYPE) && equalTypes(rightArg.getType(), INTEGER_TYPE)) {
+                        return ((BigInteger) leftArg.getValue()).compareTo((BigInteger) rightArg.getValue()) < 0;
+                    }
+                    blowup();
+
+                case LTE:
+                    if (equalTypes(leftArg.getType(), INTEGER_TYPE) && equalTypes(rightArg.getType(), INTEGER_TYPE)) {
+                        return ((BigInteger) leftArg.getValue()).compareTo((BigInteger) rightArg.getValue()) <= 0;
+                    }
+                    blowup();
+
+                case GT:
+                    if (equalTypes(leftArg.getType(), INTEGER_TYPE) && equalTypes(rightArg.getType(), INTEGER_TYPE)) {
+                        return ((BigInteger) leftArg.getValue()).compareTo((BigInteger) rightArg.getValue()) > 0;
+                    }
+                    blowup();
+
+                case GTE:
+                    if (equalTypes(leftArg.getType(), INTEGER_TYPE) && equalTypes(rightArg.getType(), INTEGER_TYPE)) {
+                        return ((BigInteger) leftArg.getValue()).compareTo((BigInteger) rightArg.getValue()) >= 0;
+                    }
+                    blowup();
+
+                case EQ:
+                    if (equalTypes(leftArg.getType(), rightArg.getType())) {
+                        return leftArg.getValue().equals(rightArg.getValue());
+                    }
+                    blowup();
+
+                case NEQ:
+                    if (equalTypes(leftArg.getType(), rightArg.getType())) {
+                        return !leftArg.getValue().equals(rightArg.getValue());
+                    }
+                    blowup();
+
+                case AND:
+                    if (equalTypes(leftArg.getType(), BOOLEAN_TYPE) && equalTypes(rightArg.getType(), BOOLEAN_TYPE)) {
+                        return (Boolean) leftArg.getValue() && (Boolean) rightArg.getValue();
+                    }
+                    blowup();
+
+                case OR:
+                    if (equalTypes(leftArg.getType(), BOOLEAN_TYPE) && equalTypes(rightArg.getType(), BOOLEAN_TYPE)) {
+                        return (Boolean) leftArg.getValue() || (Boolean) rightArg.getValue();
+                    }
+                    blowup();
+
+                default:
+                    throw new RuntimeException("Unhandled binary operation: " + this.toString());
+            }
+        }
 
         /**
          * Finds the return type of this operator, based on the types of the arguments.
@@ -78,6 +165,20 @@ public final class Operators {
 
     public enum UnOp {
         NEG;
+
+        @Nonnull
+        public Object evaluate(TypedValue childArg) {
+            switch (this) {
+                case NEG:
+                    if (equalTypes(childArg.getType(), INTEGER_TYPE)) {
+                        return ((BigInteger) childArg.getValue()).negate();
+                    }
+                    blowup();
+
+                default:
+                    throw new RuntimeException("Unhandled unary operation: " + this.toString());
+            }
+        }
 
         /**
          * Finds the return type of this operator, based on the types of the arguments.

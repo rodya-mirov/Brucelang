@@ -2,6 +2,7 @@ package io.rodyamirov.brucelang;
 
 import io.rodyamirov.brucelang.ast.ASTBuilder;
 import io.rodyamirov.brucelang.ast.ProgramNode;
+import io.rodyamirov.brucelang.evaluation.Evaluator;
 import io.rodyamirov.brucelang.lexparse.BrucelangLexer;
 import io.rodyamirov.brucelang.lexparse.BrucelangParser;
 import io.rodyamirov.brucelang.staticanalysis.LambdaDesugarer;
@@ -42,6 +43,9 @@ public class Main {
         NameRegistrar.registerNames(program);
         ReturnChecker.checkFunctionsReturn(program);
         TypeWalker.assignAndCheckTypes(program);
+
         System.out.println(TreePrinter.printTree(program, true));
+
+        Evaluator.evaluate(program);
     }
 }
