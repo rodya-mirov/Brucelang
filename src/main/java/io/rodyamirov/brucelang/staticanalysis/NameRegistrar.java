@@ -17,8 +17,8 @@ import io.rodyamirov.brucelang.ast.UnaryOpExprNode;
 import io.rodyamirov.brucelang.ast.VariableDeclarationNode;
 import io.rodyamirov.brucelang.ast.VariableDefinitionNode;
 import io.rodyamirov.brucelang.ast.VariableReferenceNode;
+import io.rodyamirov.brucelang.astexceptions.AstException;
 import io.rodyamirov.brucelang.astwalkers.ASTWalker;
-import io.rodyamirov.brucelang.astwalkers.DefaultASTWalker;
 import io.rodyamirov.brucelang.astwalkers.Walker;
 import io.rodyamirov.brucelang.util.collections.LinkedQueue;
 import io.rodyamirov.brucelang.util.collections.Queue;
@@ -32,6 +32,14 @@ public class NameRegistrar {
 
         Namespace root = programNode.getNamespace();
         checkForShadowing(root);
+    }
+
+    public static class UseBeforeDefinedException extends AstException {
+        public UseBeforeDefinedException(VariableReferenceNode variableReferenceNode) {
+            super(variableReferenceNode,
+                    "Reference '%s' in namespace '%s' is not yet defined!",
+                    variableReferenceNode.getVarName(), variableReferenceNode.getNamespace().getFullName());
+        }
     }
 
     private static void checkForShadowing(Namespace root) {
@@ -149,7 +157,13 @@ public class NameRegistrar {
 
         @Override
         public void varRefWalk(WalkFunctions<VariableReferenceNode> walkFunctions) {
-            walkFunctions.preWalker(this::useContext);
+            walkFunctions.preWalker(variableReferenceNode -> {
+                useContext(variableReferenceNode);
+
+                if (!currentContext.nameIsDefined(variableReferenceNode.getVarName())) {
+                    throw new UseBeforeDefinedException(variableReferenceNode);
+                }
+            });
         }
 
         @Override

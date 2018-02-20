@@ -13,4 +13,10 @@ public class AstException extends RuntimeException {
 
         this.troubleNode = troubleNode;
     }
+
+    protected AstException(ASTNode troubleNode, String message, Object... args) {
+        super(String.format(message, args));
+
+        this.troubleNode = troubleNode;
+    }
 }
