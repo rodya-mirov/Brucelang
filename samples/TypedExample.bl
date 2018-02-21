@@ -7,21 +7,23 @@ define f(arg: Integer): Integer as {
     return helpful;
 }
 
-let chomp: Fn<Integer, Integer> = food: Integer =>
+let chomp = food: Integer =>
     (a: Integer => {
         let x: Integer = 12;
         return a + x;
     })(food);
 
-let curry: Fn<Fn<Integer, Integer, Integer, Integer, Integer>, Fn<Integer, Integer>>
-        = func: Fn<Integer, Integer, Integer, Integer, Integer> => (x: Integer => func(x, 2, 3, 4));
+// note we don't have to have any type here, except for function arguments ...
+let curry = func: Fn<Integer, Integer, Integer, Integer, Integer> => (x: Integer => func(x, 2, 3, 4));
 
+// ... but the "define" syntax requires a return type, just for sake of syntax
 define g(zed: Integer): Integer as {
     define h(a: Integer, b: Integer, c: Integer, d: Integer): Integer as {
         return a + b + f(c + d);
     }
 
-    let curryPowder: Fn<Integer, Integer> = curry(h);
+    // type inference here, you might actually be happier declaring the type
+    let curryPowder = curry(h);
 
     if (1 < 3) {
         return curryPowder(f(1));
@@ -35,7 +37,7 @@ define g(zed: Integer): Integer as {
 
 define main(): Integer as {
     let x: Integer = 13 + 14;
-    let y: Integer = 13 * (x - f(12));
+    let y = 13 * (x - f(12));
 
     return x - g(y) * chomp(18);
 }
