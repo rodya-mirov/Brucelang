@@ -17,26 +17,17 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import java.io.IOException;
 
 public class Main {
-    public static void main(String[] args) {
-        if (args.length != 1) {
-            System.out.println("Usage: [run] fileName.bl");
+    public static void main(String[] args) throws IOException {
+        if (args.length == 0) {
+            System.out.println("Usage: [run] library1.bl library2.bl ... mainFile.bl");
             return;
         }
 
-        final CharStream input;
-        try {
-            input = CharStreams.fromFileName(args[0]);
-        } catch (IOException e) {
-            System.out.println(String.format("Could not read file '%s'", args[0]));
-            return;
+        ProgramNode program = parseFile(args[0]);
+
+        for (int i = 1; i < args.length; i++) {
+            concatenate(program, parseFile(args[i]));
         }
-
-        BrucelangLexer lexer = new BrucelangLexer(input);
-        CommonTokenStream tokenStream = new CommonTokenStream(lexer);
-        BrucelangParser parser = new BrucelangParser(tokenStream);
-
-        ASTBuilder builder = new ASTBuilder();
-        ProgramNode program = builder.visitProgram(parser.program());
 
         LambdaDesugarer.removeAnonymousFunctions(program);
 
@@ -47,5 +38,27 @@ public class Main {
         System.out.println(TreePrinter.printTree(program, true));
 
         Evaluator.evaluate(program);
+    }
+
+    private static ProgramNode parseFile(String fileName) throws IOException {
+        final CharStream input;
+        try {
+            input = CharStreams.fromFileName(fileName);
+        } catch (IOException e) {
+            System.out.println(String.format("Could not read file '%s'", fileName));
+            throw e;
+        }
+
+        BrucelangLexer lexer = new BrucelangLexer(input);
+        CommonTokenStream tokenStream = new CommonTokenStream(lexer);
+        BrucelangParser parser = new BrucelangParser(tokenStream);
+
+        ASTBuilder builder = new ASTBuilder();
+        return builder.visitProgram(parser.program());
+    }
+
+    // call this immediately after parsing, if at all
+    private static void concatenate(ProgramNode base, ProgramNode toAppend) {
+        base.getStatements().addAll(toAppend.getStatements());
     }
 }
