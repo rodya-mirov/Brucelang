@@ -25,34 +25,40 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
     @Override
     public ProgramNode visitProgram(BrucelangParser.ProgramContext ctx) {
         List<StatementNode> statements = ctx.stmt().stream()
-                .map(this::visitStmt)
+                .map(stmt -> (StatementNode) stmt.accept(this))
                 .collect(Collectors.toList());
 
         return new ProgramNode(statements);
     }
 
-    /**
-     * Visit a parse tree produced by {@link BrucelangParser#stmt}.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
     @Override
-    public StatementNode visitStmt(BrucelangParser.StmtContext ctx) {
-        if (ctx.blockStmt() != null) {
-            return visitBlockStmt(ctx.blockStmt());
-        } else if (ctx.ifStmt() != null) {
-            return visitIfStmt(ctx.ifStmt());
-        } else if (ctx.fnDef() != null) {
-            return visitFnDef(ctx.fnDef());
-        } else if (ctx.varDef() != null) {
-            return visitVarDef(ctx.varDef());
-        } else if (ctx.returnStmt() != null) {
-            return visitReturnStmt(ctx.returnStmt());
-        } else if (ctx.doStmt() != null) {
-            return visitDoStmt(ctx.doStmt());
-        } else {
-            throw new ProgrammerError("Unrecognized statement context subrule: '%s'", ctx);
-        }
+    public BlockStatementNode visitBlockStmtBranch(BrucelangParser.BlockStmtBranchContext ctx) {
+        return (BlockStatementNode) ctx.blockStmt().accept(this);
+    }
+
+    @Override
+    public VariableDefinitionNode visitFnDefBranch(BrucelangParser.FnDefBranchContext ctx) {
+        return (VariableDefinitionNode) ctx.fnDef().accept(this);
+    }
+
+    @Override
+    public VariableDefinitionNode visitVarDefBranch(BrucelangParser.VarDefBranchContext ctx) {
+        return (VariableDefinitionNode) ctx.varDef().accept(this);
+    }
+
+    @Override
+    public ReturnStatementNode visitReturnStmtBranch(BrucelangParser.ReturnStmtBranchContext ctx) {
+        return (ReturnStatementNode) ctx.returnStmt().accept(this);
+    }
+
+    @Override
+    public DoStatementNode visitDoStmtBranch(BrucelangParser.DoStmtBranchContext ctx) {
+        return (DoStatementNode) ctx.doStmt().accept(this);
+    }
+
+    @Override
+    public IfStatementNode visitIfStmtBranch(BrucelangParser.IfStmtBranchContext ctx) {
+        return (IfStatementNode) ctx.ifStmt().accept(this);
     }
 
     /**
@@ -87,7 +93,8 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
     @Override
     public BlockStatementNode visitBlockStmt(BrucelangParser.BlockStmtContext ctx) {
         List<StatementNode> statements = ctx.stmt().stream()
-                .map(this::visitStmt).collect(Collectors.toList());
+                .map(stmt -> (StatementNode) stmt.accept(this))
+                .collect(Collectors.toList());
 
         return new BlockStatementNode(statements);
     }
@@ -426,6 +433,13 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
             // ProgrammerError because the parser/lexer grammar should guarantee this is possible
             throw new ProgrammerError("Could not parse '%s' as integer", toParse);
         }
+    }
+
+    @Override
+    public StringExprNode visitStringConst(BrucelangParser.StringConstContext ctx) {
+        String value = ctx.STRING_CONST().getText();
+
+        return new StringExprNode(value);
     }
 
     /**

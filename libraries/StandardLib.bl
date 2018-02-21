@@ -1,0 +1,9 @@
+/*
+    Standard library for Brucelang. This should contain all the type
+    declarations (native) that _all_ Brucelang projects should include.
+
+    Other libraries can be included in separate files.
+ */
+
+// Just a placeholder print so we can see the loading is working
+do "Standard lib is loaded!";

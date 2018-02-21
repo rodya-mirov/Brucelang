@@ -19,11 +19,47 @@ public interface BrucelangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitProgram(BrucelangParser.ProgramContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link BrucelangParser#stmt}.
+	 * Visit a parse tree produced by the {@code blockStmtBranch}
+	 * labeled alternative in {@link BrucelangParser#stmt}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitStmt(BrucelangParser.StmtContext ctx);
+	T visitBlockStmtBranch(BrucelangParser.BlockStmtBranchContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code fnDefBranch}
+	 * labeled alternative in {@link BrucelangParser#stmt}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFnDefBranch(BrucelangParser.FnDefBranchContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code varDefBranch}
+	 * labeled alternative in {@link BrucelangParser#stmt}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitVarDefBranch(BrucelangParser.VarDefBranchContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code returnStmtBranch}
+	 * labeled alternative in {@link BrucelangParser#stmt}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitReturnStmtBranch(BrucelangParser.ReturnStmtBranchContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code doStmtBranch}
+	 * labeled alternative in {@link BrucelangParser#stmt}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDoStmtBranch(BrucelangParser.DoStmtBranchContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ifStmtBranch}
+	 * labeled alternative in {@link BrucelangParser#stmt}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIfStmtBranch(BrucelangParser.IfStmtBranchContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link BrucelangParser#returnStmt}.
 	 * @param ctx the parse tree
@@ -260,6 +296,13 @@ public interface BrucelangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitNumConst(BrucelangParser.NumConstContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code stringConst}
+	 * labeled alternative in {@link BrucelangParser#baseExpr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStringConst(BrucelangParser.StringConstContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code boolConst}
 	 * labeled alternative in {@link BrucelangParser#baseExpr}.

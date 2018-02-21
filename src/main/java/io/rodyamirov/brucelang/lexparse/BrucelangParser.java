@@ -19,10 +19,12 @@ public class BrucelangParser extends Parser {
 	protected static final PredictionContextCache _sharedContextCache =
 		new PredictionContextCache();
 	public static final int
-		T__0=1, T__1=2, T__2=3, T__3=4, T__4=5, T__5=6, T__6=7, T__7=8, T__8=9, 
-		T__9=10, TRUE=11, FALSE=12, DEFINE=13, DO=14, RETURN=15, AS=16, IS=17, 
-		IF=18, ELSE=19, LET=20, AND=21, OR=22, PLUS=23, MINUS=24, TIMES=25, DIVIDE=26, 
-		LT=27, LTE=28, GT=29, GTE=30, EQ=31, NEQ=32, ID=33, INT=34, WS=35;
+		TRUE=1, FALSE=2, DEFINE=3, DO=4, RETURN=5, AS=6, IS=7, IF=8, ELSE=9, LET=10, 
+		AND=11, OR=12, PLUS=13, MINUS=14, TIMES=15, DIVIDE=16, LT=17, LTE=18, 
+		GT=19, GTE=20, EQ=21, NEQ=22, SEMI=23, L_CURLY=24, R_CURLY=25, L_PAREN=26, 
+		R_PAREN=27, ARROW=28, SET_EQ=29, COLON=30, COMMA=31, DOT=32, LINE_COMMENT=33, 
+		BLOCK_COMMENT=34, ID=35, INT=36, STRING_CONST=37, ESC_SEQ=38, OCTAL_ESC=39, 
+		UNICODE_ESC=40, HEX_DIGIT=41, WS=42;
 	public static final int
 		RULE_program = 0, RULE_stmt = 1, RULE_returnStmt = 2, RULE_doStmt = 3, 
 		RULE_blockStmt = 4, RULE_ifStmt = 5, RULE_varDef = 6, RULE_fnDef = 7, 
@@ -40,16 +42,18 @@ public class BrucelangParser extends Parser {
 	};
 
 	private static final String[] _LITERAL_NAMES = {
-		null, "';'", "'{'", "'}'", "'('", "')'", "'='", "':'", "','", "'=>'", 
-		"'.'", "'true'", "'false'", "'define'", "'do'", "'return'", "'as'", "'is'", 
+		null, "'true'", "'false'", "'define'", "'do'", "'return'", "'as'", "'is'", 
 		"'if'", "'else'", "'let'", "'and'", "'or'", "'+'", "'-'", "'*'", "'/'", 
-		"'<'", "'<='", "'>'", "'>='", "'=='", "'!='"
+		"'<'", "'<='", "'>'", "'>='", "'=='", "'!='", "';'", "'{'", "'}'", "'('", 
+		"')'", "'=>'", "'='", "':'", "','", "'.'"
 	};
 	private static final String[] _SYMBOLIC_NAMES = {
-		null, null, null, null, null, null, null, null, null, null, null, "TRUE", 
-		"FALSE", "DEFINE", "DO", "RETURN", "AS", "IS", "IF", "ELSE", "LET", "AND", 
-		"OR", "PLUS", "MINUS", "TIMES", "DIVIDE", "LT", "LTE", "GT", "GTE", "EQ", 
-		"NEQ", "ID", "INT", "WS"
+		null, "TRUE", "FALSE", "DEFINE", "DO", "RETURN", "AS", "IS", "IF", "ELSE", 
+		"LET", "AND", "OR", "PLUS", "MINUS", "TIMES", "DIVIDE", "LT", "LTE", "GT", 
+		"GTE", "EQ", "NEQ", "SEMI", "L_CURLY", "R_CURLY", "L_PAREN", "R_PAREN", 
+		"ARROW", "SET_EQ", "COLON", "COMMA", "DOT", "LINE_COMMENT", "BLOCK_COMMENT", 
+		"ID", "INT", "STRING_CONST", "ESC_SEQ", "OCTAL_ESC", "UNICODE_ESC", "HEX_DIGIT", 
+		"WS"
 	};
 	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
 
@@ -129,7 +133,7 @@ public class BrucelangParser extends Parser {
 			setState(59);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__1) | (1L << DEFINE) | (1L << DO) | (1L << RETURN) | (1L << IF) | (1L << LET))) != 0)) {
+			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << DEFINE) | (1L << DO) | (1L << RETURN) | (1L << IF) | (1L << LET) | (1L << L_CURLY))) != 0)) {
 				{
 				{
 				setState(56);
@@ -156,31 +160,79 @@ public class BrucelangParser extends Parser {
 	}
 
 	public static class StmtContext extends ParserRuleContext {
-		public BlockStmtContext blockStmt() {
-			return getRuleContext(BlockStmtContext.class,0);
-		}
-		public FnDefContext fnDef() {
-			return getRuleContext(FnDefContext.class,0);
-		}
-		public VarDefContext varDef() {
-			return getRuleContext(VarDefContext.class,0);
-		}
-		public ReturnStmtContext returnStmt() {
-			return getRuleContext(ReturnStmtContext.class,0);
-		}
-		public DoStmtContext doStmt() {
-			return getRuleContext(DoStmtContext.class,0);
-		}
-		public IfStmtContext ifStmt() {
-			return getRuleContext(IfStmtContext.class,0);
-		}
 		public StmtContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_stmt; }
+	 
+		public StmtContext() { }
+		public void copyFrom(StmtContext ctx) {
+			super.copyFrom(ctx);
+		}
+	}
+	public static class VarDefBranchContext extends StmtContext {
+		public VarDefContext varDef() {
+			return getRuleContext(VarDefContext.class,0);
+		}
+		public VarDefBranchContext(StmtContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof BrucelangVisitor ) return ((BrucelangVisitor<? extends T>)visitor).visitStmt(this);
+			if ( visitor instanceof BrucelangVisitor ) return ((BrucelangVisitor<? extends T>)visitor).visitVarDefBranch(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class DoStmtBranchContext extends StmtContext {
+		public DoStmtContext doStmt() {
+			return getRuleContext(DoStmtContext.class,0);
+		}
+		public DoStmtBranchContext(StmtContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof BrucelangVisitor ) return ((BrucelangVisitor<? extends T>)visitor).visitDoStmtBranch(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class IfStmtBranchContext extends StmtContext {
+		public IfStmtContext ifStmt() {
+			return getRuleContext(IfStmtContext.class,0);
+		}
+		public IfStmtBranchContext(StmtContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof BrucelangVisitor ) return ((BrucelangVisitor<? extends T>)visitor).visitIfStmtBranch(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class BlockStmtBranchContext extends StmtContext {
+		public BlockStmtContext blockStmt() {
+			return getRuleContext(BlockStmtContext.class,0);
+		}
+		public BlockStmtBranchContext(StmtContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof BrucelangVisitor ) return ((BrucelangVisitor<? extends T>)visitor).visitBlockStmtBranch(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class ReturnStmtBranchContext extends StmtContext {
+		public ReturnStmtContext returnStmt() {
+			return getRuleContext(ReturnStmtContext.class,0);
+		}
+		public ReturnStmtBranchContext(StmtContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof BrucelangVisitor ) return ((BrucelangVisitor<? extends T>)visitor).visitReturnStmtBranch(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class FnDefBranchContext extends StmtContext {
+		public FnDefContext fnDef() {
+			return getRuleContext(FnDefContext.class,0);
+		}
+		public FnDefBranchContext(StmtContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof BrucelangVisitor ) return ((BrucelangVisitor<? extends T>)visitor).visitFnDefBranch(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -192,7 +244,8 @@ public class BrucelangParser extends Parser {
 			setState(70);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
-			case T__1:
+			case L_CURLY:
+				_localctx = new BlockStmtBranchContext(_localctx);
 				enterOuterAlt(_localctx, 1);
 				{
 				setState(64);
@@ -200,6 +253,7 @@ public class BrucelangParser extends Parser {
 				}
 				break;
 			case DEFINE:
+				_localctx = new FnDefBranchContext(_localctx);
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(65);
@@ -207,6 +261,7 @@ public class BrucelangParser extends Parser {
 				}
 				break;
 			case LET:
+				_localctx = new VarDefBranchContext(_localctx);
 				enterOuterAlt(_localctx, 3);
 				{
 				setState(66);
@@ -214,6 +269,7 @@ public class BrucelangParser extends Parser {
 				}
 				break;
 			case RETURN:
+				_localctx = new ReturnStmtBranchContext(_localctx);
 				enterOuterAlt(_localctx, 4);
 				{
 				setState(67);
@@ -221,6 +277,7 @@ public class BrucelangParser extends Parser {
 				}
 				break;
 			case DO:
+				_localctx = new DoStmtBranchContext(_localctx);
 				enterOuterAlt(_localctx, 5);
 				{
 				setState(68);
@@ -228,6 +285,7 @@ public class BrucelangParser extends Parser {
 				}
 				break;
 			case IF:
+				_localctx = new IfStmtBranchContext(_localctx);
 				enterOuterAlt(_localctx, 6);
 				{
 				setState(69);
@@ -254,6 +312,7 @@ public class BrucelangParser extends Parser {
 		public ExprContext expr() {
 			return getRuleContext(ExprContext.class,0);
 		}
+		public TerminalNode SEMI() { return getToken(BrucelangParser.SEMI, 0); }
 		public ReturnStmtContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
@@ -276,7 +335,7 @@ public class BrucelangParser extends Parser {
 			setState(73);
 			expr();
 			setState(74);
-			match(T__0);
+			match(SEMI);
 			}
 		}
 		catch (RecognitionException re) {
@@ -295,6 +354,7 @@ public class BrucelangParser extends Parser {
 		public ExprContext expr() {
 			return getRuleContext(ExprContext.class,0);
 		}
+		public TerminalNode SEMI() { return getToken(BrucelangParser.SEMI, 0); }
 		public DoStmtContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
@@ -317,7 +377,7 @@ public class BrucelangParser extends Parser {
 			setState(77);
 			expr();
 			setState(78);
-			match(T__0);
+			match(SEMI);
 			}
 		}
 		catch (RecognitionException re) {
@@ -332,6 +392,8 @@ public class BrucelangParser extends Parser {
 	}
 
 	public static class BlockStmtContext extends ParserRuleContext {
+		public TerminalNode L_CURLY() { return getToken(BrucelangParser.L_CURLY, 0); }
+		public TerminalNode R_CURLY() { return getToken(BrucelangParser.R_CURLY, 0); }
 		public List<StmtContext> stmt() {
 			return getRuleContexts(StmtContext.class);
 		}
@@ -357,11 +419,11 @@ public class BrucelangParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(80);
-			match(T__1);
+			match(L_CURLY);
 			setState(84);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__1) | (1L << DEFINE) | (1L << DO) | (1L << RETURN) | (1L << IF) | (1L << LET))) != 0)) {
+			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << DEFINE) | (1L << DO) | (1L << RETURN) | (1L << IF) | (1L << LET) | (1L << L_CURLY))) != 0)) {
 				{
 				{
 				setState(81);
@@ -373,7 +435,7 @@ public class BrucelangParser extends Parser {
 				_la = _input.LA(1);
 			}
 			setState(87);
-			match(T__2);
+			match(R_CURLY);
 			}
 		}
 		catch (RecognitionException re) {
@@ -392,11 +454,19 @@ public class BrucelangParser extends Parser {
 		public TerminalNode IF(int i) {
 			return getToken(BrucelangParser.IF, i);
 		}
+		public List<TerminalNode> L_PAREN() { return getTokens(BrucelangParser.L_PAREN); }
+		public TerminalNode L_PAREN(int i) {
+			return getToken(BrucelangParser.L_PAREN, i);
+		}
 		public List<ExprContext> expr() {
 			return getRuleContexts(ExprContext.class);
 		}
 		public ExprContext expr(int i) {
 			return getRuleContext(ExprContext.class,i);
+		}
+		public List<TerminalNode> R_PAREN() { return getTokens(BrucelangParser.R_PAREN); }
+		public TerminalNode R_PAREN(int i) {
+			return getToken(BrucelangParser.R_PAREN, i);
 		}
 		public List<BlockStmtContext> blockStmt() {
 			return getRuleContexts(BlockStmtContext.class);
@@ -430,11 +500,11 @@ public class BrucelangParser extends Parser {
 			setState(89);
 			match(IF);
 			setState(90);
-			match(T__3);
+			match(L_PAREN);
 			setState(91);
 			expr();
 			setState(92);
-			match(T__4);
+			match(R_PAREN);
 			setState(93);
 			blockStmt();
 			setState(103);
@@ -449,11 +519,11 @@ public class BrucelangParser extends Parser {
 					setState(95);
 					match(IF);
 					setState(96);
-					match(T__3);
+					match(L_PAREN);
 					setState(97);
 					expr();
 					setState(98);
-					match(T__4);
+					match(R_PAREN);
 					setState(99);
 					blockStmt();
 					}
@@ -493,9 +563,11 @@ public class BrucelangParser extends Parser {
 		public VarDeclContext varDecl() {
 			return getRuleContext(VarDeclContext.class,0);
 		}
+		public TerminalNode SET_EQ() { return getToken(BrucelangParser.SET_EQ, 0); }
 		public ExprContext expr() {
 			return getRuleContext(ExprContext.class,0);
 		}
+		public TerminalNode SEMI() { return getToken(BrucelangParser.SEMI, 0); }
 		public VarDefContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
@@ -518,11 +590,11 @@ public class BrucelangParser extends Parser {
 			setState(111);
 			varDecl();
 			setState(112);
-			match(T__5);
+			match(SET_EQ);
 			setState(113);
 			expr();
 			setState(114);
-			match(T__0);
+			match(SEMI);
 			}
 		}
 		catch (RecognitionException re) {
@@ -539,9 +611,12 @@ public class BrucelangParser extends Parser {
 	public static class FnDefContext extends ParserRuleContext {
 		public TerminalNode DEFINE() { return getToken(BrucelangParser.DEFINE, 0); }
 		public TerminalNode ID() { return getToken(BrucelangParser.ID, 0); }
+		public TerminalNode L_PAREN() { return getToken(BrucelangParser.L_PAREN, 0); }
 		public VarDeclListContext varDeclList() {
 			return getRuleContext(VarDeclListContext.class,0);
 		}
+		public TerminalNode R_PAREN() { return getToken(BrucelangParser.R_PAREN, 0); }
+		public TerminalNode COLON() { return getToken(BrucelangParser.COLON, 0); }
 		public TypeExprContext typeExpr() {
 			return getRuleContext(TypeExprContext.class,0);
 		}
@@ -571,13 +646,13 @@ public class BrucelangParser extends Parser {
 			setState(117);
 			match(ID);
 			setState(118);
-			match(T__3);
+			match(L_PAREN);
 			setState(119);
 			varDeclList();
 			setState(120);
-			match(T__4);
+			match(R_PAREN);
 			setState(121);
-			match(T__6);
+			match(COLON);
 			setState(122);
 			typeExpr();
 			setState(123);
@@ -599,6 +674,7 @@ public class BrucelangParser extends Parser {
 
 	public static class VarDeclContext extends ParserRuleContext {
 		public TerminalNode ID() { return getToken(BrucelangParser.ID, 0); }
+		public TerminalNode COLON() { return getToken(BrucelangParser.COLON, 0); }
 		public TypeExprContext typeExpr() {
 			return getRuleContext(TypeExprContext.class,0);
 		}
@@ -622,7 +698,7 @@ public class BrucelangParser extends Parser {
 			setState(126);
 			match(ID);
 			setState(127);
-			match(T__6);
+			match(COLON);
 			setState(128);
 			typeExpr();
 			}
@@ -664,6 +740,10 @@ public class BrucelangParser extends Parser {
 		public VarDeclContext varDecl(int i) {
 			return getRuleContext(VarDeclContext.class,i);
 		}
+		public List<TerminalNode> COMMA() { return getTokens(BrucelangParser.COMMA); }
+		public TerminalNode COMMA(int i) {
+			return getToken(BrucelangParser.COMMA, i);
+		}
 		public SomeVarDeclsContext(VarDeclListContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
@@ -680,7 +760,7 @@ public class BrucelangParser extends Parser {
 			setState(139);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
-			case T__4:
+			case R_PAREN:
 				_localctx = new NoVarDeclsContext(_localctx);
 				enterOuterAlt(_localctx, 1);
 				{
@@ -695,11 +775,11 @@ public class BrucelangParser extends Parser {
 				setState(136);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-				while (_la==T__7) {
+				while (_la==COMMA) {
 					{
 					{
 					setState(132);
-					match(T__7);
+					match(COMMA);
 					setState(133);
 					varDecl();
 					}
@@ -747,9 +827,11 @@ public class BrucelangParser extends Parser {
 	}
 	public static class ComplexTypeContext extends TypeExprContext {
 		public TerminalNode ID() { return getToken(BrucelangParser.ID, 0); }
+		public TerminalNode LT() { return getToken(BrucelangParser.LT, 0); }
 		public TypeExprListContext typeExprList() {
 			return getRuleContext(TypeExprListContext.class,0);
 		}
+		public TerminalNode GT() { return getToken(BrucelangParser.GT, 0); }
 		public ComplexTypeContext(TypeExprContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
@@ -826,6 +908,10 @@ public class BrucelangParser extends Parser {
 		public TypeExprContext typeExpr(int i) {
 			return getRuleContext(TypeExprContext.class,i);
 		}
+		public List<TerminalNode> COMMA() { return getTokens(BrucelangParser.COMMA); }
+		public TerminalNode COMMA(int i) {
+			return getToken(BrucelangParser.COMMA, i);
+		}
 		public SomeTypesContext(TypeExprListContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
@@ -857,11 +943,11 @@ public class BrucelangParser extends Parser {
 				setState(155);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-				while (_la==T__7) {
+				while (_la==COMMA) {
 					{
 					{
 					setState(151);
-					match(T__7);
+					match(COMMA);
 					setState(152);
 					typeExpr();
 					}
@@ -913,6 +999,10 @@ public class BrucelangParser extends Parser {
 		public ExprContext expr(int i) {
 			return getRuleContext(ExprContext.class,i);
 		}
+		public List<TerminalNode> COMMA() { return getTokens(BrucelangParser.COMMA); }
+		public TerminalNode COMMA(int i) {
+			return getToken(BrucelangParser.COMMA, i);
+		}
 		public SomeExprsContext(ExprListContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
@@ -929,18 +1019,19 @@ public class BrucelangParser extends Parser {
 			setState(169);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
-			case T__4:
+			case R_PAREN:
 				_localctx = new NoExprsContext(_localctx);
 				enterOuterAlt(_localctx, 1);
 				{
 				}
 				break;
-			case T__3:
 			case TRUE:
 			case FALSE:
 			case MINUS:
+			case L_PAREN:
 			case ID:
 			case INT:
+			case STRING_CONST:
 				_localctx = new SomeExprsContext(_localctx);
 				enterOuterAlt(_localctx, 2);
 				{
@@ -949,11 +1040,11 @@ public class BrucelangParser extends Parser {
 				setState(166);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-				while (_la==T__7) {
+				while (_la==COMMA) {
 					{
 					{
 					setState(162);
-					match(T__7);
+					match(COMMA);
 					setState(163);
 					expr();
 					}
@@ -1064,6 +1155,7 @@ public class BrucelangParser extends Parser {
 		public VarDeclContext varDecl() {
 			return getRuleContext(VarDeclContext.class,0);
 		}
+		public TerminalNode ARROW() { return getToken(BrucelangParser.ARROW, 0); }
 		public BlockStmtContext blockStmt() {
 			return getRuleContext(BlockStmtContext.class,0);
 		}
@@ -1075,9 +1167,12 @@ public class BrucelangParser extends Parser {
 		}
 	}
 	public static class MultiArgLambdaContext extends LambdaContext {
+		public TerminalNode L_PAREN() { return getToken(BrucelangParser.L_PAREN, 0); }
 		public VarDeclListContext varDeclList() {
 			return getRuleContext(VarDeclListContext.class,0);
 		}
+		public TerminalNode R_PAREN() { return getToken(BrucelangParser.R_PAREN, 0); }
+		public TerminalNode ARROW() { return getToken(BrucelangParser.ARROW, 0); }
 		public BlockStmtContext blockStmt() {
 			return getRuleContext(BlockStmtContext.class,0);
 		}
@@ -1092,6 +1187,7 @@ public class BrucelangParser extends Parser {
 		public VarDeclContext varDecl() {
 			return getRuleContext(VarDeclContext.class,0);
 		}
+		public TerminalNode ARROW() { return getToken(BrucelangParser.ARROW, 0); }
 		public ExprContext expr() {
 			return getRuleContext(ExprContext.class,0);
 		}
@@ -1103,9 +1199,12 @@ public class BrucelangParser extends Parser {
 		}
 	}
 	public static class MultiArgExprLambdaContext extends LambdaContext {
+		public TerminalNode L_PAREN() { return getToken(BrucelangParser.L_PAREN, 0); }
 		public VarDeclListContext varDeclList() {
 			return getRuleContext(VarDeclListContext.class,0);
 		}
+		public TerminalNode R_PAREN() { return getToken(BrucelangParser.R_PAREN, 0); }
+		public TerminalNode ARROW() { return getToken(BrucelangParser.ARROW, 0); }
 		public ExprContext expr() {
 			return getRuleContext(ExprContext.class,0);
 		}
@@ -1131,7 +1230,7 @@ public class BrucelangParser extends Parser {
 				setState(175);
 				varDecl();
 				setState(176);
-				match(T__8);
+				match(ARROW);
 				setState(177);
 				blockStmt();
 				}
@@ -1141,13 +1240,13 @@ public class BrucelangParser extends Parser {
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(179);
-				match(T__3);
+				match(L_PAREN);
 				setState(180);
 				varDeclList();
 				setState(181);
-				match(T__4);
+				match(R_PAREN);
 				setState(182);
-				match(T__8);
+				match(ARROW);
 				setState(183);
 				blockStmt();
 				}
@@ -1159,7 +1258,7 @@ public class BrucelangParser extends Parser {
 				setState(185);
 				varDecl();
 				setState(186);
-				match(T__8);
+				match(ARROW);
 				setState(187);
 				expr();
 				}
@@ -1169,13 +1268,13 @@ public class BrucelangParser extends Parser {
 				enterOuterAlt(_localctx, 4);
 				{
 				setState(189);
-				match(T__3);
+				match(L_PAREN);
 				setState(190);
 				varDeclList();
 				setState(191);
-				match(T__4);
+				match(R_PAREN);
 				setState(192);
-				match(T__8);
+				match(ARROW);
 				setState(193);
 				expr();
 				}
@@ -1521,11 +1620,12 @@ public class BrucelangParser extends Parser {
 			setState(233);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
-			case T__3:
 			case TRUE:
 			case FALSE:
+			case L_PAREN:
 			case ID:
 			case INT:
+			case STRING_CONST:
 				_localctx = new FallThroughAccessOrCallContext(_localctx);
 				enterOuterAlt(_localctx, 1);
 				{
@@ -1573,9 +1673,11 @@ public class BrucelangParser extends Parser {
 		public AccessOrCallContext accessOrCall() {
 			return getRuleContext(AccessOrCallContext.class,0);
 		}
+		public TerminalNode L_PAREN() { return getToken(BrucelangParser.L_PAREN, 0); }
 		public ExprListContext exprList() {
 			return getRuleContext(ExprListContext.class,0);
 		}
+		public TerminalNode R_PAREN() { return getToken(BrucelangParser.R_PAREN, 0); }
 		public FnCallContext(AccessOrCallContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
@@ -1598,6 +1700,7 @@ public class BrucelangParser extends Parser {
 		public AccessOrCallContext accessOrCall() {
 			return getRuleContext(AccessOrCallContext.class,0);
 		}
+		public TerminalNode DOT() { return getToken(BrucelangParser.DOT, 0); }
 		public TerminalNode ID() { return getToken(BrucelangParser.ID, 0); }
 		public NamedFieldAccessContext(AccessOrCallContext ctx) { copyFrom(ctx); }
 		@Override
@@ -1649,7 +1752,7 @@ public class BrucelangParser extends Parser {
 						setState(238);
 						if (!(precpred(_ctx, 3))) throw new FailedPredicateException(this, "precpred(_ctx, 3)");
 						setState(239);
-						match(T__9);
+						match(DOT);
 						setState(240);
 						match(ID);
 						}
@@ -1661,11 +1764,11 @@ public class BrucelangParser extends Parser {
 						setState(241);
 						if (!(precpred(_ctx, 2))) throw new FailedPredicateException(this, "precpred(_ctx, 2)");
 						setState(242);
-						match(T__3);
+						match(L_PAREN);
 						setState(243);
 						exprList();
 						setState(244);
-						match(T__4);
+						match(R_PAREN);
 						}
 						break;
 					}
@@ -1729,13 +1832,24 @@ public class BrucelangParser extends Parser {
 		}
 	}
 	public static class ParenExprContext extends BaseExprContext {
+		public TerminalNode L_PAREN() { return getToken(BrucelangParser.L_PAREN, 0); }
 		public ExprContext expr() {
 			return getRuleContext(ExprContext.class,0);
 		}
+		public TerminalNode R_PAREN() { return getToken(BrucelangParser.R_PAREN, 0); }
 		public ParenExprContext(BaseExprContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
 			if ( visitor instanceof BrucelangVisitor ) return ((BrucelangVisitor<? extends T>)visitor).visitParenExpr(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class StringConstContext extends BaseExprContext {
+		public TerminalNode STRING_CONST() { return getToken(BrucelangParser.STRING_CONST, 0); }
+		public StringConstContext(BaseExprContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof BrucelangVisitor ) return ((BrucelangVisitor<? extends T>)visitor).visitStringConst(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -1744,19 +1858,19 @@ public class BrucelangParser extends Parser {
 		BaseExprContext _localctx = new BaseExprContext(_ctx, getState());
 		enterRule(_localctx, 42, RULE_baseExpr);
 		try {
-			setState(258);
+			setState(259);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
-			case T__3:
+			case L_PAREN:
 				_localctx = new ParenExprContext(_localctx);
 				enterOuterAlt(_localctx, 1);
 				{
 				setState(251);
-				match(T__3);
+				match(L_PAREN);
 				setState(252);
 				expr();
 				setState(253);
-				match(T__4);
+				match(R_PAREN);
 				}
 				break;
 			case ID:
@@ -1775,12 +1889,20 @@ public class BrucelangParser extends Parser {
 				match(INT);
 				}
 				break;
-			case TRUE:
-			case FALSE:
-				_localctx = new BoolConstContext(_localctx);
+			case STRING_CONST:
+				_localctx = new StringConstContext(_localctx);
 				enterOuterAlt(_localctx, 4);
 				{
 				setState(257);
+				match(STRING_CONST);
+				}
+				break;
+			case TRUE:
+			case FALSE:
+				_localctx = new BoolConstContext(_localctx);
+				enterOuterAlt(_localctx, 5);
+				{
+				setState(258);
 				boolVal();
 				}
 				break;
@@ -1820,7 +1942,7 @@ public class BrucelangParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(260);
+			setState(261);
 			_la = _input.LA(1);
 			if ( !(_la==AND || _la==OR) ) {
 			_errHandler.recoverInline(this);
@@ -1868,7 +1990,7 @@ public class BrucelangParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(262);
+			setState(263);
 			_la = _input.LA(1);
 			if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << LT) | (1L << LTE) | (1L << GT) | (1L << GTE) | (1L << EQ) | (1L << NEQ))) != 0)) ) {
 			_errHandler.recoverInline(this);
@@ -1912,7 +2034,7 @@ public class BrucelangParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(264);
+			setState(265);
 			_la = _input.LA(1);
 			if ( !(_la==TRUE || _la==FALSE) ) {
 			_errHandler.recoverInline(this);
@@ -1956,7 +2078,7 @@ public class BrucelangParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(266);
+			setState(267);
 			_la = _input.LA(1);
 			if ( !(_la==PLUS || _la==MINUS) ) {
 			_errHandler.recoverInline(this);
@@ -2000,7 +2122,7 @@ public class BrucelangParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(268);
+			setState(269);
 			_la = _input.LA(1);
 			if ( !(_la==TIMES || _la==DIVIDE) ) {
 			_errHandler.recoverInline(this);
@@ -2042,7 +2164,7 @@ public class BrucelangParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(270);
+			setState(271);
 			match(MINUS);
 			}
 		}
@@ -2075,7 +2197,7 @@ public class BrucelangParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3%\u0113\4\2\t\2\4"+
+		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3,\u0114\4\2\t\2\4"+
 		"\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\4\n\t\n\4\13\t"+
 		"\13\4\f\t\f\4\r\t\r\4\16\t\16\4\17\t\17\4\20\t\20\4\21\t\21\4\22\t\22"+
 		"\4\23\t\23\4\24\t\24\4\25\t\25\4\26\t\26\4\27\t\27\4\30\t\30\4\31\t\31"+
@@ -2094,76 +2216,77 @@ public class BrucelangParser extends Parser {
 		"\23\3\23\7\23\u00da\n\23\f\23\16\23\u00dd\13\23\3\24\3\24\3\24\3\24\7"+
 		"\24\u00e3\n\24\f\24\16\24\u00e6\13\24\3\25\3\25\3\25\3\25\5\25\u00ec\n"+
 		"\25\3\26\3\26\3\26\3\26\3\26\3\26\3\26\3\26\3\26\3\26\3\26\7\26\u00f9"+
-		"\n\26\f\26\16\26\u00fc\13\26\3\27\3\27\3\27\3\27\3\27\3\27\3\27\5\27\u0105"+
-		"\n\27\3\30\3\30\3\31\3\31\3\32\3\32\3\33\3\33\3\34\3\34\3\35\3\35\3\35"+
-		"\2\3*\36\2\4\6\b\n\f\16\20\22\24\26\30\32\34\36 \"$&(*,.\60\62\64\668"+
-		"\2\7\3\2\27\30\3\2\35\"\3\2\r\16\3\2\31\32\3\2\33\34\2\u0114\2=\3\2\2"+
-		"\2\4H\3\2\2\2\6J\3\2\2\2\bN\3\2\2\2\nR\3\2\2\2\f[\3\2\2\2\16p\3\2\2\2"+
-		"\20v\3\2\2\2\22\u0080\3\2\2\2\24\u008d\3\2\2\2\26\u0095\3\2\2\2\30\u00a0"+
-		"\3\2\2\2\32\u00ab\3\2\2\2\34\u00af\3\2\2\2\36\u00c5\3\2\2\2 \u00cc\3\2"+
-		"\2\2\"\u00d3\3\2\2\2$\u00d5\3\2\2\2&\u00de\3\2\2\2(\u00eb\3\2\2\2*\u00ed"+
-		"\3\2\2\2,\u0104\3\2\2\2.\u0106\3\2\2\2\60\u0108\3\2\2\2\62\u010a\3\2\2"+
-		"\2\64\u010c\3\2\2\2\66\u010e\3\2\2\28\u0110\3\2\2\2:<\5\4\3\2;:\3\2\2"+
-		"\2<?\3\2\2\2=;\3\2\2\2=>\3\2\2\2>@\3\2\2\2?=\3\2\2\2@A\7\2\2\3A\3\3\2"+
-		"\2\2BI\5\n\6\2CI\5\20\t\2DI\5\16\b\2EI\5\6\4\2FI\5\b\5\2GI\5\f\7\2HB\3"+
-		"\2\2\2HC\3\2\2\2HD\3\2\2\2HE\3\2\2\2HF\3\2\2\2HG\3\2\2\2I\5\3\2\2\2JK"+
-		"\7\21\2\2KL\5\34\17\2LM\7\3\2\2M\7\3\2\2\2NO\7\20\2\2OP\5\34\17\2PQ\7"+
-		"\3\2\2Q\t\3\2\2\2RV\7\4\2\2SU\5\4\3\2TS\3\2\2\2UX\3\2\2\2VT\3\2\2\2VW"+
-		"\3\2\2\2WY\3\2\2\2XV\3\2\2\2YZ\7\5\2\2Z\13\3\2\2\2[\\\7\24\2\2\\]\7\6"+
-		"\2\2]^\5\34\17\2^_\7\7\2\2_i\5\n\6\2`a\7\25\2\2ab\7\24\2\2bc\7\6\2\2c"+
-		"d\5\34\17\2de\7\7\2\2ef\5\n\6\2fh\3\2\2\2g`\3\2\2\2hk\3\2\2\2ig\3\2\2"+
-		"\2ij\3\2\2\2jn\3\2\2\2ki\3\2\2\2lm\7\25\2\2mo\5\n\6\2nl\3\2\2\2no\3\2"+
-		"\2\2o\r\3\2\2\2pq\7\26\2\2qr\5\22\n\2rs\7\b\2\2st\5\34\17\2tu\7\3\2\2"+
-		"u\17\3\2\2\2vw\7\17\2\2wx\7#\2\2xy\7\6\2\2yz\5\24\13\2z{\7\7\2\2{|\7\t"+
-		"\2\2|}\5\26\f\2}~\7\22\2\2~\177\5\n\6\2\177\21\3\2\2\2\u0080\u0081\7#"+
-		"\2\2\u0081\u0082\7\t\2\2\u0082\u0083\5\26\f\2\u0083\23\3\2\2\2\u0084\u008e"+
-		"\3\2\2\2\u0085\u008a\5\22\n\2\u0086\u0087\7\n\2\2\u0087\u0089\5\22\n\2"+
-		"\u0088\u0086\3\2\2\2\u0089\u008c\3\2\2\2\u008a\u0088\3\2\2\2\u008a\u008b"+
-		"\3\2\2\2\u008b\u008e\3\2\2\2\u008c\u008a\3\2\2\2\u008d\u0084\3\2\2\2\u008d"+
-		"\u0085\3\2\2\2\u008e\25\3\2\2\2\u008f\u0096\7#\2\2\u0090\u0091\7#\2\2"+
-		"\u0091\u0092\7\35\2\2\u0092\u0093\5\30\r\2\u0093\u0094\7\37\2\2\u0094"+
-		"\u0096\3\2\2\2\u0095\u008f\3\2\2\2\u0095\u0090\3\2\2\2\u0096\27\3\2\2"+
-		"\2\u0097\u00a1\3\2\2\2\u0098\u009d\5\26\f\2\u0099\u009a\7\n\2\2\u009a"+
-		"\u009c\5\26\f\2\u009b\u0099\3\2\2\2\u009c\u009f\3\2\2\2\u009d\u009b\3"+
-		"\2\2\2\u009d\u009e\3\2\2\2\u009e\u00a1\3\2\2\2\u009f\u009d\3\2\2\2\u00a0"+
-		"\u0097\3\2\2\2\u00a0\u0098\3\2\2\2\u00a1\31\3\2\2\2\u00a2\u00ac\3\2\2"+
-		"\2\u00a3\u00a8\5\34\17\2\u00a4\u00a5\7\n\2\2\u00a5\u00a7\5\34\17\2\u00a6"+
-		"\u00a4\3\2\2\2\u00a7\u00aa\3\2\2\2\u00a8\u00a6\3\2\2\2\u00a8\u00a9\3\2"+
-		"\2\2\u00a9\u00ac\3\2\2\2\u00aa\u00a8\3\2\2\2\u00ab\u00a2\3\2\2\2\u00ab"+
+		"\n\26\f\26\16\26\u00fc\13\26\3\27\3\27\3\27\3\27\3\27\3\27\3\27\3\27\5"+
+		"\27\u0106\n\27\3\30\3\30\3\31\3\31\3\32\3\32\3\33\3\33\3\34\3\34\3\35"+
+		"\3\35\3\35\2\3*\36\2\4\6\b\n\f\16\20\22\24\26\30\32\34\36 \"$&(*,.\60"+
+		"\62\64\668\2\7\3\2\r\16\3\2\23\30\3\2\3\4\3\2\17\20\3\2\21\22\2\u0116"+
+		"\2=\3\2\2\2\4H\3\2\2\2\6J\3\2\2\2\bN\3\2\2\2\nR\3\2\2\2\f[\3\2\2\2\16"+
+		"p\3\2\2\2\20v\3\2\2\2\22\u0080\3\2\2\2\24\u008d\3\2\2\2\26\u0095\3\2\2"+
+		"\2\30\u00a0\3\2\2\2\32\u00ab\3\2\2\2\34\u00af\3\2\2\2\36\u00c5\3\2\2\2"+
+		" \u00cc\3\2\2\2\"\u00d3\3\2\2\2$\u00d5\3\2\2\2&\u00de\3\2\2\2(\u00eb\3"+
+		"\2\2\2*\u00ed\3\2\2\2,\u0105\3\2\2\2.\u0107\3\2\2\2\60\u0109\3\2\2\2\62"+
+		"\u010b\3\2\2\2\64\u010d\3\2\2\2\66\u010f\3\2\2\28\u0111\3\2\2\2:<\5\4"+
+		"\3\2;:\3\2\2\2<?\3\2\2\2=;\3\2\2\2=>\3\2\2\2>@\3\2\2\2?=\3\2\2\2@A\7\2"+
+		"\2\3A\3\3\2\2\2BI\5\n\6\2CI\5\20\t\2DI\5\16\b\2EI\5\6\4\2FI\5\b\5\2GI"+
+		"\5\f\7\2HB\3\2\2\2HC\3\2\2\2HD\3\2\2\2HE\3\2\2\2HF\3\2\2\2HG\3\2\2\2I"+
+		"\5\3\2\2\2JK\7\7\2\2KL\5\34\17\2LM\7\31\2\2M\7\3\2\2\2NO\7\6\2\2OP\5\34"+
+		"\17\2PQ\7\31\2\2Q\t\3\2\2\2RV\7\32\2\2SU\5\4\3\2TS\3\2\2\2UX\3\2\2\2V"+
+		"T\3\2\2\2VW\3\2\2\2WY\3\2\2\2XV\3\2\2\2YZ\7\33\2\2Z\13\3\2\2\2[\\\7\n"+
+		"\2\2\\]\7\34\2\2]^\5\34\17\2^_\7\35\2\2_i\5\n\6\2`a\7\13\2\2ab\7\n\2\2"+
+		"bc\7\34\2\2cd\5\34\17\2de\7\35\2\2ef\5\n\6\2fh\3\2\2\2g`\3\2\2\2hk\3\2"+
+		"\2\2ig\3\2\2\2ij\3\2\2\2jn\3\2\2\2ki\3\2\2\2lm\7\13\2\2mo\5\n\6\2nl\3"+
+		"\2\2\2no\3\2\2\2o\r\3\2\2\2pq\7\f\2\2qr\5\22\n\2rs\7\37\2\2st\5\34\17"+
+		"\2tu\7\31\2\2u\17\3\2\2\2vw\7\5\2\2wx\7%\2\2xy\7\34\2\2yz\5\24\13\2z{"+
+		"\7\35\2\2{|\7 \2\2|}\5\26\f\2}~\7\b\2\2~\177\5\n\6\2\177\21\3\2\2\2\u0080"+
+		"\u0081\7%\2\2\u0081\u0082\7 \2\2\u0082\u0083\5\26\f\2\u0083\23\3\2\2\2"+
+		"\u0084\u008e\3\2\2\2\u0085\u008a\5\22\n\2\u0086\u0087\7!\2\2\u0087\u0089"+
+		"\5\22\n\2\u0088\u0086\3\2\2\2\u0089\u008c\3\2\2\2\u008a\u0088\3\2\2\2"+
+		"\u008a\u008b\3\2\2\2\u008b\u008e\3\2\2\2\u008c\u008a\3\2\2\2\u008d\u0084"+
+		"\3\2\2\2\u008d\u0085\3\2\2\2\u008e\25\3\2\2\2\u008f\u0096\7%\2\2\u0090"+
+		"\u0091\7%\2\2\u0091\u0092\7\23\2\2\u0092\u0093\5\30\r\2\u0093\u0094\7"+
+		"\25\2\2\u0094\u0096\3\2\2\2\u0095\u008f\3\2\2\2\u0095\u0090\3\2\2\2\u0096"+
+		"\27\3\2\2\2\u0097\u00a1\3\2\2\2\u0098\u009d\5\26\f\2\u0099\u009a\7!\2"+
+		"\2\u009a\u009c\5\26\f\2\u009b\u0099\3\2\2\2\u009c\u009f\3\2\2\2\u009d"+
+		"\u009b\3\2\2\2\u009d\u009e\3\2\2\2\u009e\u00a1\3\2\2\2\u009f\u009d\3\2"+
+		"\2\2\u00a0\u0097\3\2\2\2\u00a0\u0098\3\2\2\2\u00a1\31\3\2\2\2\u00a2\u00ac"+
+		"\3\2\2\2\u00a3\u00a8\5\34\17\2\u00a4\u00a5\7!\2\2\u00a5\u00a7\5\34\17"+
+		"\2\u00a6\u00a4\3\2\2\2\u00a7\u00aa\3\2\2\2\u00a8\u00a6\3\2\2\2\u00a8\u00a9"+
+		"\3\2\2\2\u00a9\u00ac\3\2\2\2\u00aa\u00a8\3\2\2\2\u00ab\u00a2\3\2\2\2\u00ab"+
 		"\u00a3\3\2\2\2\u00ac\33\3\2\2\2\u00ad\u00b0\5\36\20\2\u00ae\u00b0\5 \21"+
 		"\2\u00af\u00ad\3\2\2\2\u00af\u00ae\3\2\2\2\u00b0\35\3\2\2\2\u00b1\u00b2"+
-		"\5\22\n\2\u00b2\u00b3\7\13\2\2\u00b3\u00b4\5\n\6\2\u00b4\u00c6\3\2\2\2"+
-		"\u00b5\u00b6\7\6\2\2\u00b6\u00b7\5\24\13\2\u00b7\u00b8\7\7\2\2\u00b8\u00b9"+
-		"\7\13\2\2\u00b9\u00ba\5\n\6\2\u00ba\u00c6\3\2\2\2\u00bb\u00bc\5\22\n\2"+
-		"\u00bc\u00bd\7\13\2\2\u00bd\u00be\5\34\17\2\u00be\u00c6\3\2\2\2\u00bf"+
-		"\u00c0\7\6\2\2\u00c0\u00c1\5\24\13\2\u00c1\u00c2\7\7\2\2\u00c2\u00c3\7"+
-		"\13\2\2\u00c3\u00c4\5\34\17\2\u00c4\u00c6\3\2\2\2\u00c5\u00b1\3\2\2\2"+
-		"\u00c5\u00b5\3\2\2\2\u00c5\u00bb\3\2\2\2\u00c5\u00bf\3\2\2\2\u00c6\37"+
-		"\3\2\2\2\u00c7\u00cd\5\"\22\2\u00c8\u00c9\5\"\22\2\u00c9\u00ca\5.\30\2"+
-		"\u00ca\u00cb\5\"\22\2\u00cb\u00cd\3\2\2\2\u00cc\u00c7\3\2\2\2\u00cc\u00c8"+
-		"\3\2\2\2\u00cd!\3\2\2\2\u00ce\u00d4\5$\23\2\u00cf\u00d0\5$\23\2\u00d0"+
-		"\u00d1\5\60\31\2\u00d1\u00d2\5$\23\2\u00d2\u00d4\3\2\2\2\u00d3\u00ce\3"+
-		"\2\2\2\u00d3\u00cf\3\2\2\2\u00d4#\3\2\2\2\u00d5\u00db\5&\24\2\u00d6\u00d7"+
-		"\5\64\33\2\u00d7\u00d8\5&\24\2\u00d8\u00da\3\2\2\2\u00d9\u00d6\3\2\2\2"+
-		"\u00da\u00dd\3\2\2\2\u00db\u00d9\3\2\2\2\u00db\u00dc\3\2\2\2\u00dc%\3"+
-		"\2\2\2\u00dd\u00db\3\2\2\2\u00de\u00e4\5(\25\2\u00df\u00e0\5\66\34\2\u00e0"+
-		"\u00e1\5(\25\2\u00e1\u00e3\3\2\2\2\u00e2\u00df\3\2\2\2\u00e3\u00e6\3\2"+
-		"\2\2\u00e4\u00e2\3\2\2\2\u00e4\u00e5\3\2\2\2\u00e5\'\3\2\2\2\u00e6\u00e4"+
-		"\3\2\2\2\u00e7\u00ec\5*\26\2\u00e8\u00e9\58\35\2\u00e9\u00ea\5(\25\2\u00ea"+
-		"\u00ec\3\2\2\2\u00eb\u00e7\3\2\2\2\u00eb\u00e8\3\2\2\2\u00ec)\3\2\2\2"+
-		"\u00ed\u00ee\b\26\1\2\u00ee\u00ef\5,\27\2\u00ef\u00fa\3\2\2\2\u00f0\u00f1"+
-		"\f\5\2\2\u00f1\u00f2\7\f\2\2\u00f2\u00f9\7#\2\2\u00f3\u00f4\f\4\2\2\u00f4"+
-		"\u00f5\7\6\2\2\u00f5\u00f6\5\32\16\2\u00f6\u00f7\7\7\2\2\u00f7\u00f9\3"+
-		"\2\2\2\u00f8\u00f0\3\2\2\2\u00f8\u00f3\3\2\2\2\u00f9\u00fc\3\2\2\2\u00fa"+
-		"\u00f8\3\2\2\2\u00fa\u00fb\3\2\2\2\u00fb+\3\2\2\2\u00fc\u00fa\3\2\2\2"+
-		"\u00fd\u00fe\7\6\2\2\u00fe\u00ff\5\34\17\2\u00ff\u0100\7\7\2\2\u0100\u0105"+
-		"\3\2\2\2\u0101\u0105\7#\2\2\u0102\u0105\7$\2\2\u0103\u0105\5\62\32\2\u0104"+
-		"\u00fd\3\2\2\2\u0104\u0101\3\2\2\2\u0104\u0102\3\2\2\2\u0104\u0103\3\2"+
-		"\2\2\u0105-\3\2\2\2\u0106\u0107\t\2\2\2\u0107/\3\2\2\2\u0108\u0109\t\3"+
-		"\2\2\u0109\61\3\2\2\2\u010a\u010b\t\4\2\2\u010b\63\3\2\2\2\u010c\u010d"+
-		"\t\5\2\2\u010d\65\3\2\2\2\u010e\u010f\t\6\2\2\u010f\67\3\2\2\2\u0110\u0111"+
-		"\7\32\2\2\u01119\3\2\2\2\30=HVin\u008a\u008d\u0095\u009d\u00a0\u00a8\u00ab"+
-		"\u00af\u00c5\u00cc\u00d3\u00db\u00e4\u00eb\u00f8\u00fa\u0104";
+		"\5\22\n\2\u00b2\u00b3\7\36\2\2\u00b3\u00b4\5\n\6\2\u00b4\u00c6\3\2\2\2"+
+		"\u00b5\u00b6\7\34\2\2\u00b6\u00b7\5\24\13\2\u00b7\u00b8\7\35\2\2\u00b8"+
+		"\u00b9\7\36\2\2\u00b9\u00ba\5\n\6\2\u00ba\u00c6\3\2\2\2\u00bb\u00bc\5"+
+		"\22\n\2\u00bc\u00bd\7\36\2\2\u00bd\u00be\5\34\17\2\u00be\u00c6\3\2\2\2"+
+		"\u00bf\u00c0\7\34\2\2\u00c0\u00c1\5\24\13\2\u00c1\u00c2\7\35\2\2\u00c2"+
+		"\u00c3\7\36\2\2\u00c3\u00c4\5\34\17\2\u00c4\u00c6\3\2\2\2\u00c5\u00b1"+
+		"\3\2\2\2\u00c5\u00b5\3\2\2\2\u00c5\u00bb\3\2\2\2\u00c5\u00bf\3\2\2\2\u00c6"+
+		"\37\3\2\2\2\u00c7\u00cd\5\"\22\2\u00c8\u00c9\5\"\22\2\u00c9\u00ca\5.\30"+
+		"\2\u00ca\u00cb\5\"\22\2\u00cb\u00cd\3\2\2\2\u00cc\u00c7\3\2\2\2\u00cc"+
+		"\u00c8\3\2\2\2\u00cd!\3\2\2\2\u00ce\u00d4\5$\23\2\u00cf\u00d0\5$\23\2"+
+		"\u00d0\u00d1\5\60\31\2\u00d1\u00d2\5$\23\2\u00d2\u00d4\3\2\2\2\u00d3\u00ce"+
+		"\3\2\2\2\u00d3\u00cf\3\2\2\2\u00d4#\3\2\2\2\u00d5\u00db\5&\24\2\u00d6"+
+		"\u00d7\5\64\33\2\u00d7\u00d8\5&\24\2\u00d8\u00da\3\2\2\2\u00d9\u00d6\3"+
+		"\2\2\2\u00da\u00dd\3\2\2\2\u00db\u00d9\3\2\2\2\u00db\u00dc\3\2\2\2\u00dc"+
+		"%\3\2\2\2\u00dd\u00db\3\2\2\2\u00de\u00e4\5(\25\2\u00df\u00e0\5\66\34"+
+		"\2\u00e0\u00e1\5(\25\2\u00e1\u00e3\3\2\2\2\u00e2\u00df\3\2\2\2\u00e3\u00e6"+
+		"\3\2\2\2\u00e4\u00e2\3\2\2\2\u00e4\u00e5\3\2\2\2\u00e5\'\3\2\2\2\u00e6"+
+		"\u00e4\3\2\2\2\u00e7\u00ec\5*\26\2\u00e8\u00e9\58\35\2\u00e9\u00ea\5("+
+		"\25\2\u00ea\u00ec\3\2\2\2\u00eb\u00e7\3\2\2\2\u00eb\u00e8\3\2\2\2\u00ec"+
+		")\3\2\2\2\u00ed\u00ee\b\26\1\2\u00ee\u00ef\5,\27\2\u00ef\u00fa\3\2\2\2"+
+		"\u00f0\u00f1\f\5\2\2\u00f1\u00f2\7\"\2\2\u00f2\u00f9\7%\2\2\u00f3\u00f4"+
+		"\f\4\2\2\u00f4\u00f5\7\34\2\2\u00f5\u00f6\5\32\16\2\u00f6\u00f7\7\35\2"+
+		"\2\u00f7\u00f9\3\2\2\2\u00f8\u00f0\3\2\2\2\u00f8\u00f3\3\2\2\2\u00f9\u00fc"+
+		"\3\2\2\2\u00fa\u00f8\3\2\2\2\u00fa\u00fb\3\2\2\2\u00fb+\3\2\2\2\u00fc"+
+		"\u00fa\3\2\2\2\u00fd\u00fe\7\34\2\2\u00fe\u00ff\5\34\17\2\u00ff\u0100"+
+		"\7\35\2\2\u0100\u0106\3\2\2\2\u0101\u0106\7%\2\2\u0102\u0106\7&\2\2\u0103"+
+		"\u0106\7\'\2\2\u0104\u0106\5\62\32\2\u0105\u00fd\3\2\2\2\u0105\u0101\3"+
+		"\2\2\2\u0105\u0102\3\2\2\2\u0105\u0103\3\2\2\2\u0105\u0104\3\2\2\2\u0106"+
+		"-\3\2\2\2\u0107\u0108\t\2\2\2\u0108/\3\2\2\2\u0109\u010a\t\3\2\2\u010a"+
+		"\61\3\2\2\2\u010b\u010c\t\4\2\2\u010c\63\3\2\2\2\u010d\u010e\t\5\2\2\u010e"+
+		"\65\3\2\2\2\u010f\u0110\t\6\2\2\u0110\67\3\2\2\2\u0111\u0112\7\20\2\2"+
+		"\u01129\3\2\2\2\30=HVin\u008a\u008d\u0095\u009d\u00a0\u00a8\u00ab\u00af"+
+		"\u00c5\u00cc\u00d3\u00db\u00e4\u00eb\u00f8\u00fa\u0105";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {

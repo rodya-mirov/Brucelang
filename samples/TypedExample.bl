@@ -1,3 +1,6 @@
+// NB: this assumes you load a previous library that defines `derp: Integer` somewhere in it
+
+// this is a good variable name, I have high hopes for it
 define f(arg: Integer): Integer as {
     let helpful: Integer = (x: Integer => x*arg)(12);
     let moreHelpful: Integer = ((a: Integer, b: Integer) => (a/b)-arg)(34, 55);
