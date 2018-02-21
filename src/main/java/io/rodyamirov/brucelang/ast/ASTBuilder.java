@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static io.rodyamirov.brucelang.types.StandardTypeDeclarations.INFERRED;
+
 public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements BrucelangVisitor<Object> {
     /**
      * Visit a program node produced by {@link BrucelangParser#program}.
@@ -126,18 +128,28 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
         return new IfStatementNode(conditions, resultStatements, maybeElse);
     }
 
-    /**
-     * Visit a parse tree produced by {@link BrucelangParser#varDef}.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
     @Override
-    public VariableDefinitionNode visitVarDef(BrucelangParser.VarDefContext ctx) {
-        VariableDeclarationNode declarationNode = (VariableDeclarationNode) ctx.varDecl().accept(this);
-        ExpressionNode definition = (ExpressionNode) ctx.expr().accept(this);
-        definition.assignToName(declarationNode);
+    public VariableDefinitionNode visitFullVarDef(BrucelangParser.FullVarDefContext ctx) {
+        return new VariableDefinitionNode(
+                (VariableDeclarationNode) ctx.varDecl().accept(this),
+                (ExpressionNode) ctx.expr().accept(this)
+        );
+    }
 
-        return new VariableDefinitionNode(declarationNode, definition);
+    @Override
+    public VariableDefinitionNode visitInferredVarDef(BrucelangParser.InferredVarDefContext ctx) {
+        return new VariableDefinitionNode(
+                (VariableDeclarationNode) ctx.inferredVarDecl().accept(this),
+                (ExpressionNode) ctx.expr().accept(this)
+        );
+    }
+
+    @Override
+    public VariableDeclarationNode visitInferredVarDecl(BrucelangParser.InferredVarDeclContext ctx) {
+        return new VariableDeclarationNode(
+                ctx.ID().getText(),
+                new SimpleTypeDeclaration(INFERRED)
+        );
     }
 
     /**

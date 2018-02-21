@@ -34,7 +34,8 @@ ifStmt
     ;
 
 varDef
-    : LET varDecl SET_EQ expr SEMI
+    : LET varDecl SET_EQ expr SEMI              # fullVarDef
+    | LET inferredVarDecl SET_EQ expr SEMI      # inferredVarDef
     ;
 
 fnDef
@@ -43,6 +44,10 @@ fnDef
 
 varDecl
     : ID COLON typeExpr
+    ;
+
+inferredVarDecl
+    : ID
     ;
 
 varDeclList
@@ -170,7 +175,7 @@ STRING_CONST
     ;
 
 ESC_SEQ
-    : '\\' ('b'|'t'|'n'|'f'|'r'|'\"'|'\''|'\\')
+    : '\\' ('b'|'t'|'n'|'f'|'r'|'"'|'\''|'\\')
     | UNICODE_ESC
     | OCTAL_ESC
     ;

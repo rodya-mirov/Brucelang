@@ -85,11 +85,19 @@ public interface BrucelangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitIfStmt(BrucelangParser.IfStmtContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link BrucelangParser#varDef}.
+	 * Visit a parse tree produced by the {@code fullVarDef}
+	 * labeled alternative in {@link BrucelangParser#varDef}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitVarDef(BrucelangParser.VarDefContext ctx);
+	T visitFullVarDef(BrucelangParser.FullVarDefContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code inferredVarDef}
+	 * labeled alternative in {@link BrucelangParser#varDef}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitInferredVarDef(BrucelangParser.InferredVarDefContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link BrucelangParser#fnDef}.
 	 * @param ctx the parse tree
@@ -102,6 +110,12 @@ public interface BrucelangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitVarDecl(BrucelangParser.VarDeclContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link BrucelangParser#inferredVarDecl}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitInferredVarDecl(BrucelangParser.InferredVarDeclContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code noVarDecls}
 	 * labeled alternative in {@link BrucelangParser#varDeclList}.
