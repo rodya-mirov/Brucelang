@@ -23,10 +23,10 @@ public class Main {
             return;
         }
 
-        ProgramNode program = parseFile(args[0]);
+        ProgramNode program = parseFile("libraries/StandardLib.bl");
 
-        for (int i = 1; i < args.length; i++) {
-            concatenate(program, parseFile(args[i]));
+        for (String fileName : args) {
+            concatenate(program, parseFile(fileName));
         }
 
         LambdaDesugarer.removeAnonymousFunctions(program);
