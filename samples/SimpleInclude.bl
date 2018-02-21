@@ -1,0 +1,3 @@
+let derp: Integer = 121;
+
+do derp;

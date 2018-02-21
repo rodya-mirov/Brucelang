@@ -37,4 +37,4 @@ define main(): Integer as {
     return x - g(y) * chomp(18);
 }
 
-do main();
+do main() - derp;
