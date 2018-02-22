@@ -451,7 +451,7 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
     public StringExprNode visitStringConst(BrucelangParser.StringConstContext ctx) {
         String value = ctx.STRING_CONST().getText();
 
-        return new StringExprNode(value);
+        return new StringExprNode(value.substring(1, value.length()-1));
     }
 
     /**
