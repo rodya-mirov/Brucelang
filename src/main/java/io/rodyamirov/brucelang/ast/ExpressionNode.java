@@ -1,6 +1,7 @@
 package io.rodyamirov.brucelang.ast;
 
-import io.rodyamirov.brucelang.types.TypeDeclaration;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Just an extension class signaling "this is a thing that can be evaluated"
@@ -9,12 +10,12 @@ public abstract class ExpressionNode extends ASTNode implements Typed {
     // whether this expression is a definitional expression (something is "let x = [this expression]")
     private boolean isDefExpr;
     private VariableDeclarationNode definedName;
-    private TypeDeclaration typeDeclaration;
+    private TypeReferenceNode typeReference;
 
     protected ExpressionNode() {
         isDefExpr = false;
         definedName = null;
-        typeDeclaration = null;
+        typeReference = null;
     }
 
     public boolean isDefExpr() {
@@ -31,12 +32,25 @@ public abstract class ExpressionNode extends ASTNode implements Typed {
     }
 
     @Override
-    public TypeDeclaration getType() {
-        return typeDeclaration;
+    public final List<? extends ASTNode> getChildren() {
+        List<ASTNode> out = new ArrayList<>();
+        if (typeReference != null) {
+            out.add(typeReference);
+        }
+        // NB: not including defined name because it's not a "child"
+        out.addAll(getExtendedChildren());
+        return out;
+    }
+
+    protected abstract List<? extends ASTNode> getExtendedChildren();
+
+    @Override
+    public TypeReferenceNode getType() {
+        return typeReference;
     }
 
     @Override
-    public void setType(TypeDeclaration type) {
-        this.typeDeclaration = type;
+    public void setType(TypeReferenceNode type) {
+        this.typeReference = type;
     }
 }

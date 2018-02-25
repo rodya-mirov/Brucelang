@@ -1,16 +1,22 @@
 package io.rodyamirov.brucelang.staticanalysis;
 
 import io.rodyamirov.brucelang.ast.FunctionExprNode;
+import io.rodyamirov.brucelang.ast.TypeDeclarationNode;
+import io.rodyamirov.brucelang.ast.TypeFieldsNode;
 import io.rodyamirov.brucelang.ast.VariableDeclarationNode;
 import io.rodyamirov.brucelang.astexceptions.DoubleDefinitionException;
 import io.rodyamirov.brucelang.astexceptions.NameNotDefinedException;
 import io.rodyamirov.brucelang.util.ProgrammerError;
+import io.rodyamirov.brucelang.util.functional.Maybe;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
@@ -19,7 +25,9 @@ public class Namespace {
     private final String localName;
     private final int depth; // 0 for root, parent.depth+1 otherwise
 
-    private final Map<String, VariableDeclarationNode> registeredNames = new HashMap<>();
+    private final Set<String> localNames = new HashSet<>();
+    private final Map<String, VariableDeclarationNode> registeredVariables = new HashMap<>();
+    private final Map<String, TypeDeclarationNode> registeredTypes = new HashMap<>();
     private final Map<String, Namespace> childSpaces = new HashMap<>();
 
     private final AtomicInteger anonCounter = new AtomicInteger(0);
@@ -42,7 +50,7 @@ public class Namespace {
         return new Namespace(this, localName);
     }
 
-    private synchronized void registerChild(String childName, Namespace child) {
+    private void registerChild(String childName, Namespace child) {
         if (childSpaces.containsKey(childName)) {
             throw new ProgrammerError("Double definition of scope name '%s' -> '%s'",
                     getFullName(), childName);
@@ -62,7 +70,7 @@ public class Namespace {
     /**
      * Make a new child scope, with an anonymous name of the form $n where n is some integer.
      */
-    public synchronized Namespace makeBlockChild() {
+    public Namespace makeBlockChild() {
         String localName = Integer.toString(anonCounter.getAndIncrement());
 
         while (childSpaces.containsKey(localName)) {
@@ -72,8 +80,19 @@ public class Namespace {
         return makeNamedChild("$block$" + localName);
     }
 
-    public synchronized Namespace makeFunctionChild(FunctionExprNode functionExprNode) {
-        String localName = functionExprNode.getDefinedName().getVarName();
+    public Namespace makeFunctionChild(FunctionExprNode functionExprNode) {
+        final String localName;
+        if (functionExprNode.isDefExpr()) {
+            localName = functionExprNode.getDefinedName().getVarName();
+        } else {
+            localName = functionExprNode.getAnonName();
+        }
+
+        return makeNamedChild(localName);
+    }
+
+    public Namespace makeTypeChild(TypeFieldsNode typeFieldsNode) {
+        String localName = typeFieldsNode.getName();
 
         return makeNamedChild(localName);
     }
@@ -88,12 +107,12 @@ public class Namespace {
     }
 
     public Collection<String> getLocalNames() {
-        return registeredNames.keySet();
+        return localNames;
     }
 
     public boolean nameIsDefined(String name) {
         Predicate<Namespace> nameLocallyDefined = namespace ->
-            namespace.registeredNames.containsKey(name);
+            namespace.localNames.contains(name);
 
         Namespace namespace = this;
 
@@ -118,7 +137,7 @@ public class Namespace {
     public void register(VariableDeclarationNode declarationNode) {
         String name = declarationNode.getVarName();
 
-        if (registeredNames.containsKey(name)) {
+        if (localNames.contains(name)) {
             throw new DoubleDefinitionException(
                     declarationNode,
                     "Name '%s' in '%s' is already in use!",
@@ -126,14 +145,53 @@ public class Namespace {
             );
         }
 
-        registeredNames.put(name, declarationNode);
+        localNames.add(name);
+        registeredVariables.put(name, declarationNode);
+    }
+
+    /**
+     * Register the given node.
+     *
+     * Note that this does not check for shadowing, although it will blow up if the same name is
+     * registered twice in the same namespace.
+     *
+     * @param declarationNode VariableDeclarationNode to be registered
+     */
+    public void register(TypeDeclarationNode declarationNode) {
+        String name = declarationNode.getName();
+
+        if (localNames.contains(name)) {
+            throw new DoubleDefinitionException(
+                    declarationNode,
+                    "Name '%s' in '%s' is already in use!",
+                    name, this.getFullName()
+            );
+        }
+
+        localNames.add(name);
+        registeredTypes.put(name, declarationNode);
     }
 
     @Nonnull
     public VariableDeclarationNode getVariableDeclaration(String varName) {
         Namespace toSearch = this;
         while (toSearch != null) {
-            VariableDeclarationNode declarationNode = toSearch.registeredNames.get(varName);
+            VariableDeclarationNode declarationNode = toSearch.registeredVariables.get(varName);
+            if (declarationNode != null) {
+                return declarationNode;
+            } else {
+                toSearch = toSearch.parent;
+            }
+        }
+
+        throw new NameNotDefinedException(this, varName);
+    }
+
+    @Nonnull
+    public TypeDeclarationNode getTypeDeclaration(String varName) {
+        Namespace toSearch = this;
+        while (toSearch != null) {
+            TypeDeclarationNode declarationNode = toSearch.registeredTypes.get(varName);
             if (declarationNode != null) {
                 return declarationNode;
             } else {

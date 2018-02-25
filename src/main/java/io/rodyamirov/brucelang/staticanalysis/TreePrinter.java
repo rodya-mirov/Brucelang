@@ -1,25 +1,27 @@
 package io.rodyamirov.brucelang.staticanalysis;
 
 import io.rodyamirov.brucelang.ast.ASTNode;
-import io.rodyamirov.brucelang.ast.BinOpExprNode;
 import io.rodyamirov.brucelang.ast.BlockStatementNode;
 import io.rodyamirov.brucelang.ast.BoolExprNode;
 import io.rodyamirov.brucelang.ast.DoStatementNode;
 import io.rodyamirov.brucelang.ast.FieldAccessNode;
+import io.rodyamirov.brucelang.ast.FieldDeclarationNode;
 import io.rodyamirov.brucelang.ast.FunctionCallNode;
 import io.rodyamirov.brucelang.ast.FunctionExprNode;
 import io.rodyamirov.brucelang.ast.IfStatementNode;
 import io.rodyamirov.brucelang.ast.IntExprNode;
+import io.rodyamirov.brucelang.ast.NativeVarDefNode;
 import io.rodyamirov.brucelang.ast.ProgramNode;
 import io.rodyamirov.brucelang.ast.ReturnStatementNode;
 import io.rodyamirov.brucelang.ast.StatementNode;
 import io.rodyamirov.brucelang.ast.StringExprNode;
-import io.rodyamirov.brucelang.ast.UnaryOpExprNode;
+import io.rodyamirov.brucelang.ast.TypeDeclarationNode;
+import io.rodyamirov.brucelang.ast.TypeDefinitionNode;
+import io.rodyamirov.brucelang.ast.TypeFieldsNode;
+import io.rodyamirov.brucelang.ast.TypeReferenceNode;
 import io.rodyamirov.brucelang.ast.VariableDeclarationNode;
 import io.rodyamirov.brucelang.ast.VariableDefinitionNode;
 import io.rodyamirov.brucelang.ast.VariableReferenceNode;
-import io.rodyamirov.brucelang.astwalkers.ASTWalker;
-import io.rodyamirov.brucelang.types.TypeDeclaration;
 import io.rodyamirov.brucelang.util.collections.ArrayStack;
 import io.rodyamirov.brucelang.util.collections.Stack;
 
@@ -101,6 +103,75 @@ public class TreePrinter {
         }
 
         @Override
+        public void visitNativeVarDef(NativeVarDefNode nativeVarDefNode) {
+            indent(nativeVarDefNode.getNamespace().getDepth());
+            stringBuilder.append("declare native ");
+            nativeVarDefNode.getDeclarationNode().accept(this);
+            stringBuilder.append(';');
+            newline();
+        }
+
+        @Override
+        public void visitTypeDefinition(TypeDefinitionNode typeDefinition) {
+            indent(typeDefinition.getNamespace().getDepth());
+            stringBuilder.append("declare type ");
+            typeDefinition.getDeclaration().accept(this);
+            stringBuilder.append(" {");
+
+            typeDefinition.getFields().accept(this);
+
+            indent(typeDefinition.getNamespace().getDepth());
+            stringBuilder.append("}");
+            newline();
+        }
+
+        @Override
+        public void visitTypeFields(TypeFieldsNode typeFieldsNode) {
+            typeFieldsNode.getChildren().forEach(field -> field.accept(this));
+        }
+
+        @Override
+        public void visitFieldDeclaration(FieldDeclarationNode fieldDeclaration) {
+            indent(fieldDeclaration.getNamespace().getDepth());
+            stringBuilder.append(fieldDeclaration.getName());
+            stringBuilder.append(": ");
+            fieldDeclaration.getType().accept(this);
+            stringBuilder.append(';');
+            newline();
+        }
+
+        @Override
+        public void visitTypeDeclaration(TypeDeclarationNode typeDeclarationNode) {
+            stringBuilder.append(typeDeclarationNode.getName());
+        }
+
+        @Override
+        public void visitSimpleTypeReference(TypeReferenceNode.SimpleTypeReferenceNode simpleTypeReferenceNode) {
+            stringBuilder.append(simpleTypeReferenceNode.getName());
+        }
+
+        @Override
+        public void visitParametrizedTypeReference(TypeReferenceNode.ParametrizedTypeReferenceNode parametrizedTypeReferenceNode) {
+            parametrizedTypeReferenceNode.getBaseReference().accept(this);
+
+            stringBuilder.append('<');
+
+            commaSepList(parametrizedTypeReferenceNode.getArguments());
+
+            stringBuilder.append('>');
+        }
+
+        @Override
+        public void visitFunctionTypeReference(TypeReferenceNode.FunctionTypeReferenceNode functionTypeReferenceNode) {
+            stringBuilder.append("Fn(");
+
+            commaSepList(functionTypeReferenceNode.getArguments());
+
+            stringBuilder.append(") -> ");
+            functionTypeReferenceNode.getReturnType().accept(this);
+        }
+
+        @Override
         public void visitFunctionExpr(FunctionExprNode functionDefinitionNode) {
             if (functionDefinitionNode.getParameterNodes().size() == 1) {
                 functionDefinitionNode.getParameterNodes().get(0).accept(this);
@@ -135,7 +206,7 @@ public class TreePrinter {
             stringBuilder.append(variableDeclarationNode.getVarName());
             stringBuilder.append(": ");
 
-            variableDeclarationNode.getType().writePrettyString(stringBuilder);
+            variableDeclarationNode.getType().accept(this);
         }
 
         @Override
@@ -227,19 +298,6 @@ public class TreePrinter {
         }
 
         @Override
-        public void visitBinOpExprNode(BinOpExprNode binOpExprNode) {
-            // TODO: these parens can sometimes, but not always, be omitted. Not sure how to nicify
-            // TODO: without doing a LOT of extra work
-            stringBuilder.append('(');
-            binOpExprNode.getLeftChild().accept(this);
-            stringBuilder.append(' ');
-            stringBuilder.append(binOpExprNode.getOperation().toString());
-            stringBuilder.append(' ');
-            binOpExprNode.getRightChild().accept(this);
-            stringBuilder.append(')');
-        }
-
-        @Override
         public void visitFieldAccess(FieldAccessNode fieldAccessNode) {
             if (excessiveParens) {
                 stringBuilder.append('(');
@@ -252,15 +310,6 @@ public class TreePrinter {
             if (excessiveParens) {
                 stringBuilder.append(')');
             }
-        }
-
-        @Override
-        public void visitUnaryOpExprNode(UnaryOpExprNode unaryOpExprNode) {
-            stringBuilder.append('(');
-            stringBuilder.append(unaryOpExprNode.getOperation().toString());
-            stringBuilder.append(' ');
-            unaryOpExprNode.getChild().accept(this);
-            stringBuilder.append(')');
         }
 
         @Override

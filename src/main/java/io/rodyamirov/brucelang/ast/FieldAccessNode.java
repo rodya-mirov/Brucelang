@@ -30,7 +30,7 @@ public class FieldAccessNode extends ExpressionNode {
     }
 
     @Override
-    public List<ExpressionNode> getChildren() {
+    public List<ExpressionNode> getExtendedChildren() {
         return Collections.singletonList(baseNode);
     }
 }

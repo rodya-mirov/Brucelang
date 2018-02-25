@@ -15,6 +15,20 @@ stmt
     | returnStmt        # returnStmtBranch
     | doStmt            # doStmtBranch
     | ifStmt            # ifStmtBranch
+    | typeDefnStmt      # typeDefnStmtBranch
+    | nativeDeclStmt    # nativeDeclStmtBranch
+    ;
+
+nativeDeclStmt
+    : DECLARE NATIVE ID COLON typeExpr SEMI
+    ;
+
+typeDefnStmt
+    : DECLARE TYPE ID L_CURLY (fieldDecl)* R_CURLY (SEMI)?
+    ;
+
+fieldDecl
+    : ID COLON typeExpr SEMI
     ;
 
 returnStmt
@@ -39,7 +53,7 @@ varDef
     ;
 
 fnDef
-    : DEFINE ID L_PAREN varDeclList R_PAREN COLON typeExpr AS blockStmt
+    : DEFINE ID L_PAREN varDeclList R_PAREN COLON typeExpr AS blockStmt (SEMI)?
     ;
 
 varDecl
@@ -56,8 +70,9 @@ varDeclList
     ;
 
 typeExpr
-    : ID                            # simpleType
-    | ID LT typeExprList GT         # complexType
+    : ID                                                    # simpleType
+    | ID LT typeExprList GT                                 # complexType
+    | FN L_PAREN typeExprList R_PAREN SM_ARROW typeExpr     # fnType
     ;
 
 typeExprList
@@ -76,33 +91,33 @@ expr // top-level expression class
     ;
 
 lambda
-    : varDecl ARROW blockStmt                       # oneArgLambda
-    | L_PAREN varDeclList R_PAREN ARROW blockStmt   # multiArgLambda
-    | varDecl ARROW expr                            # oneArgExprLambda
-    | L_PAREN varDeclList R_PAREN ARROW expr        # multiArgExprLambda
+    : varDecl BIG_ARROW blockStmt                       # oneArgLambda
+    | L_PAREN varDeclList R_PAREN BIG_ARROW blockStmt   # multiArgLambda
+    | varDecl BIG_ARROW expr                            # oneArgExprLambda
+    | L_PAREN varDeclList R_PAREN BIG_ARROW expr        # multiArgExprLambda
     ;
 
 linkedBoolExpr
     : compExpr                  # fallThroughCompExpr
-    | compExpr boolOp compExpr  # boolOpExpr
+    | compExpr BOOL_OP compExpr # boolOpExpr
     ;
 
 compExpr
     : addExpr                   # fallThroughAddExpr
-    | addExpr compOp addExpr    # compOpExpr
+    | addExpr COMP_OP addExpr   # compOpExpr
     ;
 
 addExpr
-    : mulExpr (addOp mulExpr)*
+    : mulExpr (ADD_OP mulExpr)*
     ;
 
 mulExpr
-    : unaryExpr (mulOp unaryExpr)*
+    : unaryExpr (MUL_OP unaryExpr)*
     ;
 
 unaryExpr
     : accessOrCall         # fallThroughAccessOrCall
-    | unaryOp unaryExpr    # nestedUnaryExpr
+    | UNARY_OP unaryExpr   # nestedUnaryExpr
     ;
 
 accessOrCall
@@ -116,20 +131,22 @@ baseExpr
     | ID                               # variableReference
     | INT                              # numConst
     | STRING_CONST                     # stringConst
-    | boolVal                          # boolConst
+    | BOOL_VAL                         # boolConst
     ;
 
-boolOp    : AND | OR ;
-compOp    : GT | GTE | LT | LTE | EQ | NEQ ;
-boolVal   : TRUE  | FALSE  ;
-addOp     : PLUS  | MINUS  ;
-mulOp     : TIMES | DIVIDE ;
-unaryOp   : MINUS          ;
+BOOL_OP   : AND | OR ;
+COMP_OP   : GT | GTE | LT | LTE | EQ | NEQ ;
+BOOL_VAL  : TRUE  | FALSE  ;
+ADD_OP    : PLUS  | MINUS  ;
+MUL_OP    : TIMES | DIVIDE ;
+UNARY_OP  : MINUS | NOT    ;
 
 
 TRUE   : 'true' ;
 FALSE  : 'false' ;
 
+DECLARE : 'declare' ;
+NATIVE  : 'native' ;
 DEFINE : 'define' ;
 DO     : 'do' ;
 RETURN : 'return' ;
@@ -138,9 +155,12 @@ IS     : 'is' ;
 IF     : 'if' ;
 ELSE   : 'else' ;
 LET    : 'let' ;
+TYPE   : 'type' ;
 
-AND    : 'and' ;
-OR     : 'or' ;
+FN     : 'Fn' ;
+
+AND    : '&&' ;
+OR     : '||' ;
 PLUS   : '+'  ;
 MINUS  : '-'  ;
 TIMES  : '*'  ;
@@ -151,13 +171,15 @@ GT     : '>'  ;
 GTE    : '>=' ;
 EQ     : '==' ;
 NEQ    : '!=' ;
+NOT    : '!'  ;
 
 SEMI   : ';' ;
 L_CURLY : '{' ;
 R_CURLY : '}' ;
 L_PAREN : '(' ;
 R_PAREN : ')' ;
-ARROW  : '=>' ;
+SM_ARROW   : '->' ;
+BIG_ARROW  : '=>' ;
 SET_EQ : '=' ;
 COLON  : ':' ;
 COMMA  : ',' ;
@@ -166,6 +188,7 @@ DOT    : '.' ;
 LINE_COMMENT  : '//' ~('\n' | '\r')* '\r'? '\n' -> skip ;
 BLOCK_COMMENT : '/*' (.)*? '*/'                 -> skip ; // note non-greedy regex
 
+// note that keywords _cannot_ parse as IDs; they have priority in the lexer, by design
 ID : [A-Za-z][A-Za-z0-9_]* ; // ids have to start with a letter, then letter/num/underscore all good
 
 INT: [0-9]+ ;             // int

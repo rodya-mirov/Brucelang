@@ -1,31 +1,28 @@
 package io.rodyamirov.brucelang.ast;
 
-import io.rodyamirov.brucelang.types.TypeDeclaration;
-
-import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.List;
 
 public final class VariableDeclarationNode extends ASTNode implements Typed {
         private final String varName;
-    private TypeDeclaration typeDeclaration;
+    private TypeReferenceNode typeReference;
 
-    public VariableDeclarationNode(String varName, @Nonnull TypeDeclaration typeDeclaration) {
+    public VariableDeclarationNode(String varName, TypeReferenceNode typeReference) {
         this.varName = varName;
-        this.typeDeclaration = typeDeclaration;
+        this.typeReference = typeReference;
     }
 
     public String getVarName() {
         return varName;
     }
 
-    public TypeDeclaration getType() {
-        return typeDeclaration;
+    public TypeReferenceNode getType() {
+        return typeReference;
     }
 
     @Override
-    public void setType(TypeDeclaration type) {
-        this.typeDeclaration = type;
+    public void setType(TypeReferenceNode type) {
+        this.typeReference = type;
     }
 
     @Override
@@ -39,6 +36,6 @@ public final class VariableDeclarationNode extends ASTNode implements Typed {
 
     @Override
     public List<ASTNode> getChildren() {
-        return Collections.emptyList();
+        return Collections.singletonList(typeReference);
     }
 }

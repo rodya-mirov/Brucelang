@@ -5,7 +5,7 @@ import io.rodyamirov.brucelang.astexceptions.WrongOrderException;
 import javax.annotation.Nonnull;
 import java.util.List;
 
-public final class BlockStatementNode extends StatementNode implements StatementListHolder {
+public final class BlockStatementNode extends StatementNode {
     private final List<StatementNode> statements;
 
     private String localName;
@@ -29,11 +29,6 @@ public final class BlockStatementNode extends StatementNode implements Statement
 
     public List<StatementNode> getStatements() {
         return statements;
-    }
-
-    @Override
-    public void insertStatementNode(int index, StatementNode statementNode) {
-        statements.add(index, statementNode);
     }
 
     @Override

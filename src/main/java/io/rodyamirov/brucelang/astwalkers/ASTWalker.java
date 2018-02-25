@@ -1,19 +1,23 @@
 package io.rodyamirov.brucelang.astwalkers;
 
 import io.rodyamirov.brucelang.ast.ASTNode;
-import io.rodyamirov.brucelang.ast.BinOpExprNode;
 import io.rodyamirov.brucelang.ast.BlockStatementNode;
 import io.rodyamirov.brucelang.ast.BoolExprNode;
 import io.rodyamirov.brucelang.ast.DoStatementNode;
 import io.rodyamirov.brucelang.ast.FieldAccessNode;
+import io.rodyamirov.brucelang.ast.FieldDeclarationNode;
 import io.rodyamirov.brucelang.ast.FunctionCallNode;
 import io.rodyamirov.brucelang.ast.FunctionExprNode;
 import io.rodyamirov.brucelang.ast.IfStatementNode;
 import io.rodyamirov.brucelang.ast.IntExprNode;
+import io.rodyamirov.brucelang.ast.NativeVarDefNode;
 import io.rodyamirov.brucelang.ast.ProgramNode;
 import io.rodyamirov.brucelang.ast.ReturnStatementNode;
 import io.rodyamirov.brucelang.ast.StringExprNode;
-import io.rodyamirov.brucelang.ast.UnaryOpExprNode;
+import io.rodyamirov.brucelang.ast.TypeDeclarationNode;
+import io.rodyamirov.brucelang.ast.TypeDefinitionNode;
+import io.rodyamirov.brucelang.ast.TypeFieldsNode;
+import io.rodyamirov.brucelang.ast.TypeReferenceNode;
 import io.rodyamirov.brucelang.ast.VariableDeclarationNode;
 import io.rodyamirov.brucelang.ast.VariableDefinitionNode;
 import io.rodyamirov.brucelang.ast.VariableReferenceNode;
@@ -22,6 +26,14 @@ import java.util.function.Consumer;
 
 public interface ASTWalker {
     void programWalk(WalkFunctions<ProgramNode> walkFunctions);
+    void nativeVarDefWalk(WalkFunctions<NativeVarDefNode> walkFunctions);
+    void typeDefnWalk(WalkFunctions<TypeDefinitionNode> walkFunctions);
+    void typeFieldsWalk(WalkFunctions<TypeFieldsNode> walkFunctions);
+    void fieldDeclWalk(WalkFunctions<FieldDeclarationNode> walkFunctions);
+    void typeDeclWalk(WalkFunctions<TypeDeclarationNode> walkFunctions);
+    void simpleTypeRefWalk(WalkFunctions<TypeReferenceNode.SimpleTypeReferenceNode> walkFunctions);
+    void parTypeRefWalk(WalkFunctions<TypeReferenceNode.ParametrizedTypeReferenceNode> walkFunctions);
+    void funcTypeRefWalk(WalkFunctions<TypeReferenceNode.FunctionTypeReferenceNode> walkFunctions);
     void functionExprWalk(WalkFunctions<FunctionExprNode> walkFunctions);
     void varDefnWalk(WalkFunctions<VariableDefinitionNode> walkFunctions);
     void varDeclWalk(WalkFunctions<VariableDeclarationNode> walkFunctions);
@@ -29,8 +41,6 @@ public interface ASTWalker {
     void doWalk(WalkFunctions<DoStatementNode> walkFunctions);
     void fnCallWalk(WalkFunctions<FunctionCallNode> walkFunctions);
     void ifStmtWalk(WalkFunctions<IfStatementNode> walkFunctions);
-    void binOpWalk(WalkFunctions<BinOpExprNode> walkFunctions);
-    void unaryOpWalk(WalkFunctions<UnaryOpExprNode> walkFunctions);
     void fieldAccessWalk(WalkFunctions<FieldAccessNode> walkFunctions);
     void intExprWalk(WalkFunctions<IntExprNode> walkFunctions);
     void boolExprWalk(WalkFunctions<BoolExprNode> walkFunctions);
@@ -56,14 +66,12 @@ public interface ASTWalker {
             return postWalker;
         }
 
-        public WalkFunctions<T> preWalker(Consumer<T> preWalker) {
+        public void preWalker(Consumer<T> preWalker) {
             this.preWalker = preWalker;
-            return this;
         }
 
-        public WalkFunctions<T> postWalker(Consumer<T> postWalker) {
+        public void postWalker(Consumer<T> postWalker) {
             this.postWalker = postWalker;
-            return this;
         }
     }
 }

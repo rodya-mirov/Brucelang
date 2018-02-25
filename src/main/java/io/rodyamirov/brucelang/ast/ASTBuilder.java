@@ -2,23 +2,66 @@ package io.rodyamirov.brucelang.ast;
 
 import io.rodyamirov.brucelang.lexparse.BrucelangParser;
 import io.rodyamirov.brucelang.lexparse.BrucelangVisitor;
-import io.rodyamirov.brucelang.types.ComplexTypeDeclaration;
-import io.rodyamirov.brucelang.types.SimpleTypeDeclaration;
-import io.rodyamirov.brucelang.types.StandardTypeDeclarations;
-import io.rodyamirov.brucelang.types.TypeDeclaration;
+import io.rodyamirov.brucelang.types.StandardTypeReferences;
 import io.rodyamirov.brucelang.util.ProgrammerError;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
+import javax.annotation.Nonnull;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static io.rodyamirov.brucelang.types.StandardTypeDeclarations.INFERRED;
-
 public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements BrucelangVisitor<Object> {
+    private static final Map<String, String> binOpLookupTable;
+    private static final Map<String, String> unaryOpLookupTable;
+
+    static {
+        binOpLookupTable = new HashMap<>();
+
+        binOpLookupTable.put("+", "add");
+        binOpLookupTable.put("-", "subtract");
+        binOpLookupTable.put("*", "multiply");
+        binOpLookupTable.put("/", "divide");
+
+        binOpLookupTable.put("<", "lt");
+        binOpLookupTable.put("<=", "lte");
+        binOpLookupTable.put(">", "gt");
+        binOpLookupTable.put(">=", "gte");
+        binOpLookupTable.put("==", "eq");
+        binOpLookupTable.put("!=", "neq");
+    }
+
+    @Nonnull
+    private static String lookupBinOp(String token) {
+        String out = binOpLookupTable.get(token);
+        if (out == null) {
+            throw new RuntimeException(String.format("Unknown binary operation '%s'", token));
+        }
+        return out;
+    }
+
+    static {
+        unaryOpLookupTable = new HashMap<>();
+
+        unaryOpLookupTable.put("-", "neg");
+        unaryOpLookupTable.put("!", "not");
+    }
+
+    @Nonnull
+    private static String lookupUnaryOp(String token) {
+        String out = unaryOpLookupTable.get(token);
+        if (out == null) {
+            throw new RuntimeException(String.format("Unknown unary operation '%s'", token));
+        }
+        return out;
+    }
+
     /**
      * Visit a program node produced by {@link BrucelangParser#program}.
      * @param ctx the parse tree
@@ -31,6 +74,34 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
                 .collect(Collectors.toList());
 
         return new ProgramNode(statements);
+    }
+
+    @Override
+    public TypeDefinitionNode visitTypeDefnStmtBranch(BrucelangParser.TypeDefnStmtBranchContext ctx) {
+        return (TypeDefinitionNode) ctx.typeDefnStmt().accept(this);
+    }
+
+    @Override
+    public FieldDeclarationNode visitFieldDecl(BrucelangParser.FieldDeclContext ctx) {
+        return new FieldDeclarationNode(
+                ctx.ID().getText(),
+                (TypeReferenceNode) ctx.typeExpr().accept(this)
+        );
+    }
+
+    @Override
+    public TypeDefinitionNode visitTypeDefnStmt(BrucelangParser.TypeDefnStmtContext ctx) {
+        String typeName = ctx.ID().getText();
+
+        TypeDeclarationNode typeDecl = new TypeDeclarationNode(ctx.ID().getText());
+
+        List<FieldDeclarationNode> fields = ctx.fieldDecl().stream()
+                .map(fieldDecl -> (FieldDeclarationNode) fieldDecl.accept(this))
+                .collect(Collectors.toList());
+
+        TypeFieldsNode typeFieldsNode = new TypeFieldsNode(typeName, fields);
+
+        return new TypeDefinitionNode(typeDecl, typeFieldsNode);
     }
 
     @Override
@@ -61,6 +132,21 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
     @Override
     public IfStatementNode visitIfStmtBranch(BrucelangParser.IfStmtBranchContext ctx) {
         return (IfStatementNode) ctx.ifStmt().accept(this);
+    }
+
+    @Override
+    public NativeVarDefNode visitNativeDeclStmtBranch(BrucelangParser.NativeDeclStmtBranchContext ctx) {
+        return (NativeVarDefNode) ctx.nativeDeclStmt().accept(this);
+    }
+
+    @Override
+    public NativeVarDefNode visitNativeDeclStmt(BrucelangParser.NativeDeclStmtContext ctx) {
+        String name = ctx.ID().getText();
+        TypeReferenceNode typeRef = (TypeReferenceNode) ctx.typeExpr().accept(this);
+
+        VariableDeclarationNode decl = new VariableDeclarationNode(name, typeRef);
+
+        return new NativeVarDefNode(decl);
     }
 
     /**
@@ -146,10 +232,7 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
 
     @Override
     public VariableDeclarationNode visitInferredVarDecl(BrucelangParser.InferredVarDeclContext ctx) {
-        return new VariableDeclarationNode(
-                ctx.ID().getText(),
-                new SimpleTypeDeclaration(INFERRED)
-        );
+        return new VariableDeclarationNode(ctx.ID().getText(),null);
     }
 
     /**
@@ -165,11 +248,12 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
                 visitBlockStmt(ctx.blockStmt()).getStatements()
         );
 
-        TypeDeclaration typeDeclaration = StandardTypeDeclarations.makeFunctionType(
+        TypeReferenceNode typeDeclaration = StandardTypeReferences.makeFunctionType(
                 definition.getParameterNodes().stream()
                         .map(param -> param.getType())
                         .collect(Collectors.toList()),
-                (TypeDeclaration) ctx.typeExpr().accept(this)
+                (TypeReferenceNode) ctx.typeExpr().accept(this),
+                null
         );
 
         VariableDeclarationNode declarationNode = new VariableDeclarationNode(
@@ -182,7 +266,7 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
     @Override
     public VariableDeclarationNode visitVarDecl(BrucelangParser.VarDeclContext ctx) {
         String name = ctx.ID().getText();
-        TypeDeclaration type = (TypeDeclaration) ctx.typeExpr().accept(this);
+        TypeReferenceNode type = (TypeReferenceNode) ctx.typeExpr().accept(this);
 
         return new VariableDeclarationNode(name, type);
     }
@@ -200,27 +284,35 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
     }
 
     @Override
-    public SimpleTypeDeclaration visitSimpleType(BrucelangParser.SimpleTypeContext ctx) {
-        return new SimpleTypeDeclaration(ctx.ID().getText());
+    public TypeReferenceNode.SimpleTypeReferenceNode visitSimpleType(BrucelangParser.SimpleTypeContext ctx) {
+        return new TypeReferenceNode.SimpleTypeReferenceNode(ctx.ID().getText());
     }
 
     @Override
-    public ComplexTypeDeclaration visitComplexType(BrucelangParser.ComplexTypeContext ctx) {
-        String name = ctx.ID().getText();
-        List<TypeDeclaration> args = (List<TypeDeclaration>) ctx.typeExprList().accept(this);
+    public TypeReferenceNode.ParametrizedTypeReferenceNode visitComplexType(BrucelangParser.ComplexTypeContext ctx) {
+        TypeReferenceNode.SimpleTypeReferenceNode base = new TypeReferenceNode.SimpleTypeReferenceNode(ctx.ID().getText());
+        List<TypeReferenceNode> args = (List<TypeReferenceNode>) ctx.typeExprList().accept(this);
 
-        return new ComplexTypeDeclaration(name, args);
+        return new TypeReferenceNode.ParametrizedTypeReferenceNode(base, args);
     }
 
     @Override
-    public List<TypeDeclaration> visitNoTypes(BrucelangParser.NoTypesContext ctx) {
+    public TypeReferenceNode.FunctionTypeReferenceNode visitFnType(BrucelangParser.FnTypeContext ctx) {
+        List<TypeReferenceNode> args = (List<TypeReferenceNode>) ctx.typeExprList().accept(this);
+        TypeReferenceNode returnType = (TypeReferenceNode) ctx.typeExpr().accept(this);
+
+        return new TypeReferenceNode.FunctionTypeReferenceNode(args, returnType);
+    }
+
+    @Override
+    public List<TypeReferenceNode> visitNoTypes(BrucelangParser.NoTypesContext ctx) {
         return new ArrayList<>();
     }
 
     @Override
-    public List<TypeDeclaration> visitSomeTypes(BrucelangParser.SomeTypesContext ctx) {
+    public List<TypeReferenceNode> visitSomeTypes(BrucelangParser.SomeTypesContext ctx) {
         return ctx.typeExpr().stream()
-                .map(vd -> (TypeDeclaration) vd.accept(this))
+                .map(typeExpr -> (TypeReferenceNode) typeExpr.accept(this))
                 .collect(Collectors.toList());
     }
 
@@ -298,10 +390,11 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
             throw new RuntimeException("Wrong parse?");
         }
 
-        return new BinOpExprNode(
-                visitBoolOp(ctx.boolOp()),
-                (ExpressionNode) ctx.compExpr(0).accept(this),
-                (ExpressionNode) ctx.compExpr(1).accept(this)
+        return new FunctionCallNode(
+                new VariableReferenceNode(lookupBinOp(ctx.BOOL_OP().getText())),
+                Arrays.asList(
+                        (ExpressionNode) ctx.compExpr(0).accept(this),
+                        (ExpressionNode) ctx.compExpr(1).accept(this))
         );
     }
 
@@ -316,11 +409,11 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
             throw new RuntimeException("Wrong parse?");
         }
 
-        return new BinOpExprNode(
-                visitCompOp(ctx.compOp()),
-                (ExpressionNode) ctx.addExpr(0).accept(this),
-                (ExpressionNode) ctx.addExpr(1).accept(this)
-        );
+        return new FunctionCallNode(
+                new VariableReferenceNode(lookupBinOp(ctx.COMP_OP().getText())),
+                Arrays.asList(
+                        (ExpressionNode) ctx.addExpr(0).accept(this),
+                        (ExpressionNode) ctx.addExpr(1).accept(this)));
     }
 
     /**
@@ -333,11 +426,11 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
         ExpressionNode current = visitMulExpr(ctx.mulExpr(0));
 
         for (int i = 1; i < ctx.mulExpr().size(); i++) {
-            current = new BinOpExprNode(
-                    visitAddOp(ctx.addOp(i-1)),
-                    current,
-                    visitMulExpr(ctx.mulExpr(i))
-            );
+            current = new FunctionCallNode(
+                    new VariableReferenceNode(lookupBinOp(ctx.ADD_OP(i-1).getText())),
+                    Arrays.asList(
+                            current,
+                            (ExpressionNode) ctx.mulExpr(i).accept(this)));
         }
 
         return current;
@@ -353,10 +446,9 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
         ExpressionNode current = (ExpressionNode) ctx.unaryExpr(0).accept(this);
 
         for (int i = 1; i < ctx.unaryExpr().size(); i++) {
-            current = new BinOpExprNode(
-                    visitMulOp(ctx.mulOp(i-1)),
-                    current,
-                    (ExpressionNode) ctx.unaryExpr(i).accept(this)
+            current = new FunctionCallNode(
+                    new VariableReferenceNode(lookupBinOp(ctx.MUL_OP(i-1).getText())),
+                    Arrays.asList(current, (ExpressionNode) ctx.unaryExpr(i).accept(this))
             );
         }
 
@@ -402,8 +494,10 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
      * @return the visitor result
      */
     @Override
-    public UnaryOpExprNode visitNestedUnaryExpr(BrucelangParser.NestedUnaryExprContext ctx) {
-        return new UnaryOpExprNode(visitUnaryOp(ctx.unaryOp()), (ExpressionNode) ctx.unaryExpr().accept(this));
+    public FunctionCallNode visitNestedUnaryExpr(BrucelangParser.NestedUnaryExprContext ctx) {
+        return new FunctionCallNode(
+                new VariableReferenceNode(lookupUnaryOp(ctx.UNARY_OP().getText())),
+                Collections.singletonList((ExpressionNode) ctx.unaryExpr().accept(this)));
     }
 
     /**
@@ -462,108 +556,7 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
      */
     @Override
     public BoolExprNode visitBoolConst(BrucelangParser.BoolConstContext ctx) {
-        return new BoolExprNode(visitBoolVal(ctx.boolVal()));
-    }
-
-    /**
-     * Visit a parse tree produced by {@link BrucelangParser#boolOp}.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    @Override
-    public Operators.BinOp visitBoolOp(BrucelangParser.BoolOpContext ctx) {
-        if (ctx.AND() != null) {
-            return Operators.BinOp.AND;
-        } else if (ctx.OR() != null) {
-            return Operators.BinOp.OR;
-        } else {
-            throw new ProgrammerError("Unrecognized boolean operator: '%s'", ctx);
-        }
-    }
-
-    /**
-     * Visit a parse tree produced by {@link BrucelangParser#compOp}.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    @Override
-    public Operators.BinOp visitCompOp(BrucelangParser.CompOpContext ctx) {
-        if (ctx.EQ() != null) {
-            return Operators.BinOp.EQ;
-        } else if (ctx.NEQ() != null) {
-            return Operators.BinOp.NEQ;
-        } else if (ctx.GT() != null) {
-            return Operators.BinOp.GT;
-        } else if (ctx.GTE() != null) {
-            return Operators.BinOp.GTE;
-        } else if (ctx.LT() != null) {
-            return Operators.BinOp.LT;
-        } else if (ctx.LTE() != null) {
-            return Operators.BinOp.LTE;
-        } else {
-            throw new ProgrammerError("Unrecognized comparison operator: '%s'", ctx);
-        }
-    }
-
-    /**
-     * Visit a parse tree produced by {@link BrucelangParser#boolVal}.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    @Override
-    public Boolean visitBoolVal(BrucelangParser.BoolValContext ctx) {
-        if (ctx.TRUE() != null) {
-            return true;
-        } else if (ctx.FALSE() != null) {
-            return false;
-        } else {
-            throw new ProgrammerError("Unrecognized boolean value: '%s'", ctx);
-        }
-    }
-
-    /**
-     * Visit a parse tree produced by {@link BrucelangParser#addOp}.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    @Override
-    public Operators.BinOp visitAddOp(BrucelangParser.AddOpContext ctx) {
-        if (ctx.PLUS() != null) {
-            return Operators.BinOp.PLUS;
-        } else if (ctx.MINUS() != null) {
-            return Operators.BinOp.MINUS;
-        } else {
-            throw new ProgrammerError("Unrecognized additive operation: '%s'", ctx);
-        }
-    }
-
-    /**
-     * Visit a parse tree produced by {@link BrucelangParser#mulOp}.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    @Override
-    public Operators.BinOp visitMulOp(BrucelangParser.MulOpContext ctx) {
-        if (ctx.TIMES() != null) {
-            return Operators.BinOp.TIMES;
-        } else if (ctx.DIVIDE() != null) {
-            return Operators.BinOp.DIVIDE;
-        } else {
-            throw new ProgrammerError("Unrecognized multiplicative operation: '%s'", ctx);
-        }
-    }
-
-    /**
-     * Visit a parse tree produced by {@link BrucelangParser#unaryOp}.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    @Override
-    public Operators.UnOp visitUnaryOp(BrucelangParser.UnaryOpContext ctx) {
-        if (ctx.MINUS() != null) {
-            return Operators.UnOp.NEG;
-        } else {
-            throw new ProgrammerError("Unrecognized unary operator: '%s'", ctx);
-        }
+        boolean value = Boolean.parseBoolean(ctx.BOOL_VAL().getText());
+        return new BoolExprNode(value);
     }
 }

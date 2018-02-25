@@ -6,11 +6,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class FunctionExprNode extends ExpressionNode implements StatementListHolder {
+public class FunctionExprNode extends ExpressionNode {
     private static final AtomicInteger canonicalIds = new AtomicInteger(0);
 
     private final List<VariableDeclarationNode> parameterNodes;
     private final List<StatementNode> definitionStatements;
+
+    private String anonName = null;
 
     public FunctionExprNode(List<VariableDeclarationNode> parameterNodes, List<StatementNode> definitionStatements) {
         this.definitionStatements = new ArrayList<>(definitionStatements);
@@ -25,13 +27,16 @@ public class FunctionExprNode extends ExpressionNode implements StatementListHol
         return definitionStatements;
     }
 
-    public static String makeAnonName() {
+    private static String makeAnonName() {
         return "$lambda$" + canonicalIds.getAndIncrement();
     }
 
-    @Override
-    public void insertStatementNode(int index, StatementNode statementNode) {
-        this.definitionStatements.add(index, statementNode);
+    public String getAnonName() {
+        if (this.anonName == null) {
+            this.anonName = makeAnonName();
+        }
+
+        return this.anonName;
     }
 
     @Override
@@ -47,7 +52,7 @@ public class FunctionExprNode extends ExpressionNode implements StatementListHol
     }
 
     @Override
-    public List<ASTNode> getChildren() {
+    public List<ASTNode> getExtendedChildren() {
         List<ASTNode> out = new ArrayList<>(parameterNodes.size() + definitionStatements.size());
 
         out.addAll(parameterNodes);

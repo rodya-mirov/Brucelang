@@ -20,7 +20,7 @@ public final class StringExprNode extends ExpressionNode {
     }
 
     @Override
-    public List<ASTNode> getChildren() {
+    public List<ASTNode> getExtendedChildren() {
         return Collections.emptyList();
     }
 }

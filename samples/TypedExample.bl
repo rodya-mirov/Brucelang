@@ -1,5 +1,12 @@
 // NB: this assumes you load a previous library that defines `derp: Integer` somewhere in it
 
+do !(true);
+
+let zombie = x:Integer => {
+    let helper: Fn(Integer) -> Integer = a: Integer => x*a;
+    return helper(12);
+};
+
 // this is a good variable name, I have high hopes for it
 define f(arg: Integer): Integer as {
     let helpful: Integer = (x: Integer => x*arg)(12);
@@ -14,7 +21,7 @@ let chomp = food: Integer =>
     })(food);
 
 // note we don't have to have any type here, except for function arguments ...
-let curry = func: Fn<Integer, Integer, Integer, Integer, Integer> => (x: Integer => func(x, 2, 3, 4));
+let curry = func: Fn(Integer, Integer, Integer, Integer) -> Integer => (x: Integer => func(x, 2, 3, 4));
 
 // ... but the "define" syntax requires a return type, just for sake of syntax
 define g(zed: Integer): Integer as {

@@ -1,28 +1,34 @@
 package io.rodyamirov.brucelang.staticanalysis;
 
-import io.rodyamirov.brucelang.ast.BinOpExprNode;
+import io.rodyamirov.brucelang.ast.ASTNode;
 import io.rodyamirov.brucelang.ast.BlockStatementNode;
 import io.rodyamirov.brucelang.ast.BoolExprNode;
 import io.rodyamirov.brucelang.ast.DoStatementNode;
 import io.rodyamirov.brucelang.ast.FieldAccessNode;
+import io.rodyamirov.brucelang.ast.FieldDeclarationNode;
 import io.rodyamirov.brucelang.ast.FunctionCallNode;
 import io.rodyamirov.brucelang.ast.FunctionExprNode;
 import io.rodyamirov.brucelang.ast.IfStatementNode;
 import io.rodyamirov.brucelang.ast.IntExprNode;
+import io.rodyamirov.brucelang.ast.NativeVarDefNode;
 import io.rodyamirov.brucelang.ast.ProgramNode;
 import io.rodyamirov.brucelang.ast.ReturnStatementNode;
 import io.rodyamirov.brucelang.ast.StatementNode;
 import io.rodyamirov.brucelang.ast.StringExprNode;
-import io.rodyamirov.brucelang.ast.UnaryOpExprNode;
+import io.rodyamirov.brucelang.ast.TypeDeclarationNode;
+import io.rodyamirov.brucelang.ast.TypeDefinitionNode;
+import io.rodyamirov.brucelang.ast.TypeFieldsNode;
+import io.rodyamirov.brucelang.ast.TypeReferenceNode;
 import io.rodyamirov.brucelang.ast.VariableDeclarationNode;
 import io.rodyamirov.brucelang.ast.VariableDefinitionNode;
 import io.rodyamirov.brucelang.ast.VariableReferenceNode;
 import io.rodyamirov.brucelang.astexceptions.AstException;
 import io.rodyamirov.brucelang.astwalkers.ASTWalker;
-import io.rodyamirov.brucelang.astwalkers.DefaultASTWalker;
 import io.rodyamirov.brucelang.astwalkers.Walker;
 import io.rodyamirov.brucelang.util.collections.ArrayStack;
 import io.rodyamirov.brucelang.util.collections.Stack;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ReturnChecker {
     private ReturnChecker() {
@@ -51,13 +57,38 @@ public class ReturnChecker {
         }
     }
 
-    private static class ReturnInFunctionWalker extends DefaultASTWalker {
-        private final Stack<FunctionExprNode> functionExprNodeStack = new ArrayStack<>();
+    // for checking every return actually does occur in a function
+    private static class ReturnInFunctionWalker implements ASTWalker {
+        private final Stack<AtomicInteger> functionExprNodeStack = new ArrayStack<>();
+
+        private void newFunctionStack(ASTNode ignored) {
+            functionExprNodeStack.push(new AtomicInteger(0));
+        }
+
+        private void endFunctionStack(ASTNode ignored) {
+            functionExprNodeStack.pop();
+        }
+
+        @Override
+        public void programWalk(WalkFunctions<ProgramNode> walkFunctions) {
+            walkFunctions.preWalker(this::newFunctionStack);
+            walkFunctions.postWalker(this::endFunctionStack);
+        }
+
+        @Override
+        public void nativeVarDefWalk(WalkFunctions<NativeVarDefNode> walkFunctions) {
+        }
+
+        @Override
+        public void typeFieldsWalk(WalkFunctions<TypeFieldsNode> walkFunctions) {
+            walkFunctions.preWalker(this::newFunctionStack);
+            walkFunctions.postWalker(this::endFunctionStack);
+        }
 
         @Override
         public void returnWalk(WalkFunctions<ReturnStatementNode> walkFunctions) {
             walkFunctions.preWalker(returnStatementNode -> {
-                if (functionExprNodeStack.size() == 0) {
+                if (functionExprNodeStack.peek().get() == 0) {
                     throw new ReturnNotInFunctionException(returnStatementNode);
                 }
             });
@@ -65,11 +96,81 @@ public class ReturnChecker {
 
         @Override
         public void functionExprWalk(WalkFunctions<FunctionExprNode> walkFunctions) {
-            walkFunctions.preWalker(functionExprNodeStack::push);
-            walkFunctions.postWalker(functionExprNode -> functionExprNodeStack.pop());
+            walkFunctions.preWalker(func -> functionExprNodeStack.peek().getAndIncrement());
+            walkFunctions.postWalker(functionExprNode -> functionExprNodeStack.peek().getAndDecrement());
+        }
+
+        // most nodes have nothing to do with this check ....
+        @Override
+        public void typeDefnWalk(WalkFunctions<TypeDefinitionNode> walkFunctions) {
+        }
+
+        @Override
+        public void fieldDeclWalk(WalkFunctions<FieldDeclarationNode> walkFunctions) {
+        }
+
+        @Override
+        public void typeDeclWalk(WalkFunctions<TypeDeclarationNode> walkFunctions) {
+        }
+
+        @Override
+        public void simpleTypeRefWalk(WalkFunctions<TypeReferenceNode.SimpleTypeReferenceNode> walkFunctions) {
+        }
+
+        @Override
+        public void parTypeRefWalk(WalkFunctions<TypeReferenceNode.ParametrizedTypeReferenceNode> walkFunctions) {
+        }
+
+        @Override
+        public void funcTypeRefWalk(WalkFunctions<TypeReferenceNode.FunctionTypeReferenceNode> walkFunctions) {
+        }
+
+        @Override
+        public void varDefnWalk(WalkFunctions<VariableDefinitionNode> walkFunctions) {
+        }
+
+        @Override
+        public void varDeclWalk(WalkFunctions<VariableDeclarationNode> walkFunctions) {
+        }
+
+        @Override
+        public void doWalk(WalkFunctions<DoStatementNode> walkFunctions) {
+        }
+
+        @Override
+        public void fnCallWalk(WalkFunctions<FunctionCallNode> walkFunctions) {
+        }
+
+        @Override
+        public void ifStmtWalk(WalkFunctions<IfStatementNode> walkFunctions) {
+        }
+
+        @Override
+        public void fieldAccessWalk(WalkFunctions<FieldAccessNode> walkFunctions) {
+        }
+
+        @Override
+        public void intExprWalk(WalkFunctions<IntExprNode> walkFunctions) {
+        }
+
+        @Override
+        public void boolExprWalk(WalkFunctions<BoolExprNode> walkFunctions) {
+        }
+
+        @Override
+        public void stringExprWalk(WalkFunctions<StringExprNode> walkFunctions) {
+        }
+
+        @Override
+        public void varRefWalk(WalkFunctions<VariableReferenceNode> walkFunctions) {
+        }
+
+        @Override
+        public void blockStmtWalk(WalkFunctions<BlockStatementNode> walkFunctions) {
         }
     }
 
+    // for finding which nodes actually do return, to see if every code path returns
     private static class ReturnWalker implements ASTWalker {
         private void doesNotReturn(StatementNode statementNode) {
             statementNode.setReturns(false);
@@ -81,6 +182,40 @@ public class ReturnChecker {
 
         @Override
         public void programWalk(WalkFunctions<ProgramNode> walkFunctions) {
+        }
+
+        @Override
+        public void nativeVarDefWalk(WalkFunctions<NativeVarDefNode> walkFunctions) {
+            walkFunctions.preWalker(this::doesNotReturn);
+        }
+
+        @Override
+        public void typeDefnWalk(WalkFunctions<TypeDefinitionNode> walkFunctions) {
+            walkFunctions.preWalker(this::doesNotReturn);
+        }
+
+        @Override
+        public void typeFieldsWalk(WalkFunctions<TypeFieldsNode> walkFunctions) {
+        }
+
+        @Override
+        public void fieldDeclWalk(WalkFunctions<FieldDeclarationNode> walkFunctions) {
+        }
+
+        @Override
+        public void typeDeclWalk(WalkFunctions<TypeDeclarationNode> walkFunctions) {
+        }
+
+        @Override
+        public void simpleTypeRefWalk(WalkFunctions<TypeReferenceNode.SimpleTypeReferenceNode> walkFunctions) {
+        }
+
+        @Override
+        public void parTypeRefWalk(WalkFunctions<TypeReferenceNode.ParametrizedTypeReferenceNode> walkFunctions) {
+        }
+
+        @Override
+        public void funcTypeRefWalk(WalkFunctions<TypeReferenceNode.FunctionTypeReferenceNode> walkFunctions) {
         }
 
         @Override
@@ -140,14 +275,6 @@ public class ReturnChecker {
                     ifStatementNode.setReturns(didReturn);
                 }
             });
-        }
-
-        @Override
-        public void binOpWalk(WalkFunctions<BinOpExprNode> walkFunctions) {
-        }
-
-        @Override
-        public void unaryOpWalk(WalkFunctions<UnaryOpExprNode> walkFunctions) {
         }
 
         @Override

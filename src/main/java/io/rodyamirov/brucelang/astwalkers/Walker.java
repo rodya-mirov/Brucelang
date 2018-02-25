@@ -1,19 +1,23 @@
 package io.rodyamirov.brucelang.astwalkers;
 
 import io.rodyamirov.brucelang.ast.ASTNode;
-import io.rodyamirov.brucelang.ast.BinOpExprNode;
 import io.rodyamirov.brucelang.ast.BlockStatementNode;
 import io.rodyamirov.brucelang.ast.BoolExprNode;
 import io.rodyamirov.brucelang.ast.DoStatementNode;
 import io.rodyamirov.brucelang.ast.FieldAccessNode;
+import io.rodyamirov.brucelang.ast.FieldDeclarationNode;
 import io.rodyamirov.brucelang.ast.FunctionCallNode;
 import io.rodyamirov.brucelang.ast.FunctionExprNode;
 import io.rodyamirov.brucelang.ast.IfStatementNode;
 import io.rodyamirov.brucelang.ast.IntExprNode;
+import io.rodyamirov.brucelang.ast.NativeVarDefNode;
 import io.rodyamirov.brucelang.ast.ProgramNode;
 import io.rodyamirov.brucelang.ast.ReturnStatementNode;
 import io.rodyamirov.brucelang.ast.StringExprNode;
-import io.rodyamirov.brucelang.ast.UnaryOpExprNode;
+import io.rodyamirov.brucelang.ast.TypeDeclarationNode;
+import io.rodyamirov.brucelang.ast.TypeDefinitionNode;
+import io.rodyamirov.brucelang.ast.TypeFieldsNode;
+import io.rodyamirov.brucelang.ast.TypeReferenceNode;
 import io.rodyamirov.brucelang.ast.VariableDeclarationNode;
 import io.rodyamirov.brucelang.ast.VariableDefinitionNode;
 import io.rodyamirov.brucelang.ast.VariableReferenceNode;
@@ -24,8 +28,8 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public final class Walker {
-    private final List<ASTPreWalker> preWalkers = new ArrayList<>();
-    private final List<ASTPostWalker> postWalkers = new ArrayList<>();
+    private final List<ASTNode.ASTVisitor> preWalkers = new ArrayList<>();
+    private final List<ASTNode.ASTVisitor> postWalkers = new ArrayList<>();
 
     private final WalkerVisitor walkerVisitor = new WalkerVisitor();
 
@@ -37,262 +41,408 @@ public final class Walker {
     }
 
     public Walker withWalker(ASTWalker walker) {
-        InferredWalker inferredWalker = new InferredWalker(walker);
-
-        preWalkers.add(inferredWalker);
-        postWalkers.add(inferredWalker);
+        preWalkers.add(new PreWalkerVisitor(walker));
+        postWalkers.add(new PostWalkerVisitor(walker));
 
         return this;
     }
 
-    public Walker withPreWalker(ASTPreWalker walker) {
-        preWalkers.add(walker);
-
-        return this;
-    }
-
-    public Walker withPostWalker(ASTPostWalker walker) {
-        postWalkers.add(walker);
-
-        return this;
-    }
-
+    // it's a visitor that does the traversal in an organized way, and invokes its owned visitors
+    // at the appropriate times
     private class WalkerVisitor implements ASTNode.ASTVisitor {
-        private void visitChildren(ASTNode node) {
-            for (ASTNode child : node.getChildren()) {
-                child.accept(this);
+        private void visit(ASTNode astNode) {
+            for (ASTNode.ASTVisitor preWalker : preWalkers) {
+                astNode.accept(preWalker);
+            }
+
+            for (ASTNode child : astNode.getChildren()) {
+                if (child != null) {
+                    child.accept(this);
+                }
+            }
+
+            for (ASTNode.ASTVisitor postWalker : postWalkers) {
+                astNode.accept(postWalker);
             }
         }
 
         @Override
         public void visitProgram(ProgramNode programNode) {
-            for (ASTPreWalker preWalker : preWalkers) {
-                preWalker.preWalkProgram(programNode);
-            }
+            visit(programNode);
+        }
 
-            visitChildren(programNode);
+        @Override
+        public void visitNativeVarDef(NativeVarDefNode nativeVarDefNode) {
+            visit(nativeVarDefNode);
+        }
 
-            for (ASTPostWalker postWalker : postWalkers) {
-                postWalker.postWalkProgram(programNode);
-            }
+        @Override
+        public void visitTypeDefinition(TypeDefinitionNode typeDefinition) {
+            visit(typeDefinition);
+        }
+
+        @Override
+        public void visitTypeFields(TypeFieldsNode typeFieldsNode) {
+            visit(typeFieldsNode);
+        }
+
+        @Override
+        public void visitFieldDeclaration(FieldDeclarationNode fieldDeclaration) {
+            visit(fieldDeclaration);
+        }
+
+        @Override
+        public void visitTypeDeclaration(TypeDeclarationNode typeDeclarationNode) {
+            visit(typeDeclarationNode);
+        }
+
+        @Override
+        public void visitSimpleTypeReference(TypeReferenceNode.SimpleTypeReferenceNode simpleTypeReferenceNode) {
+            visit(simpleTypeReferenceNode);
+        }
+
+        @Override
+        public void visitParametrizedTypeReference(TypeReferenceNode.ParametrizedTypeReferenceNode parametrizedTypeReferenceNode) {
+            visit(parametrizedTypeReferenceNode);
+        }
+
+        @Override
+        public void visitFunctionTypeReference(TypeReferenceNode.FunctionTypeReferenceNode functionTypeReferenceNode) {
+            visit(functionTypeReferenceNode);
         }
 
         @Override
         public void visitFunctionExpr(FunctionExprNode functionDefinitionNode) {
-            for (ASTPreWalker preWalker : preWalkers) {
-                preWalker.preWalkFunctionExpr(functionDefinitionNode);
-            }
-
-            visitChildren(functionDefinitionNode);
-
-            for (ASTPostWalker postWalker : postWalkers) {
-                postWalker.postWalkFunctionExpr(functionDefinitionNode);
-            }
+            visit(functionDefinitionNode);
         }
 
         @Override
         public void visitVariableDefinition(VariableDefinitionNode variableDefinitionNode) {
-            for (ASTPreWalker preWalker : preWalkers) {
-                preWalker.preWalkVariableDefn(variableDefinitionNode);
-            }
-
-            visitChildren(variableDefinitionNode);
-
-            for (ASTPostWalker postWalker : postWalkers) {
-                postWalker.postWalkVariableDefn(variableDefinitionNode);
-            }
+            visit(variableDefinitionNode);
         }
 
         @Override
         public void visitVariableDeclaration(VariableDeclarationNode variableDeclarationNode) {
-            for (ASTPreWalker preWalker : preWalkers) {
-                preWalker.preWalkVariableDecl(variableDeclarationNode);
-            }
-
-            visitChildren(variableDeclarationNode);
-
-            for (ASTPostWalker postWalker : postWalkers) {
-                postWalker.postWalkVariableDecl(variableDeclarationNode);
-            }
+            visit(variableDeclarationNode);
         }
 
         @Override
         public void visitBlockStatement(BlockStatementNode blockStatementNode) {
-            for (ASTPreWalker preWalker : preWalkers) {
-                preWalker.preWalkBlockStmt(blockStatementNode);
-            }
-
-            visitChildren(blockStatementNode);
-
-            for (ASTPostWalker postWalker : postWalkers) {
-                postWalker.postWalkBlockStmt(blockStatementNode);
-            }
+            visit(blockStatementNode);
         }
 
         @Override
         public void visitDoStatement(DoStatementNode doStatementNode) {
-            for (ASTPreWalker preWalker : preWalkers) {
-                preWalker.preWalkDoStmt(doStatementNode);
-            }
-
-            visitChildren(doStatementNode);
-
-            for (ASTPostWalker postWalker : postWalkers) {
-                postWalker.postWalkDoStmt(doStatementNode);
-            }
+            visit(doStatementNode);
         }
 
         @Override
         public void visitReturnStatement(ReturnStatementNode returnStatementNode) {
-            for (ASTPreWalker preWalker : preWalkers) {
-                preWalker.preWalkReturnStmt(returnStatementNode);
-            }
-
-            visitChildren(returnStatementNode);
-
-            for (ASTPostWalker postWalker : postWalkers) {
-                postWalker.postWalkReturnStmt(returnStatementNode);
-            }
+            visit(returnStatementNode);
         }
 
         @Override
         public void visitIfStatement(IfStatementNode ifStatementNode) {
-            for (ASTPreWalker preWalker : preWalkers) {
-                preWalker.preWalkIfStmt(ifStatementNode);
-            }
-
-            visitChildren(ifStatementNode);
-
-            for (ASTPostWalker postWalker : postWalkers) {
-                postWalker.postWalkIfStmt(ifStatementNode);
-            }
+            visit(ifStatementNode);
         }
 
         @Override
         public void visitFunctionCallNode(FunctionCallNode functionCallNode) {
-            for (ASTPreWalker preWalker : preWalkers) {
-                preWalker.preWalkFnCall(functionCallNode);
-            }
-
-            visitChildren(functionCallNode);
-
-            for (ASTPostWalker postWalker : postWalkers) {
-                postWalker.postWalkFnCall(functionCallNode);
-            }
-        }
-
-        @Override
-        public void visitBinOpExprNode(BinOpExprNode binOpExprNode) {
-            for (ASTPreWalker preWalker : preWalkers) {
-                preWalker.preWalkBinOp(binOpExprNode);
-            }
-
-            visitChildren(binOpExprNode);
-
-            for (ASTPostWalker postWalker : postWalkers) {
-                postWalker.postWalkBinOp(binOpExprNode);
-            }
-        }
-
-        @Override
-        public void visitUnaryOpExprNode(UnaryOpExprNode unaryOpExprNode) {
-            for (ASTPreWalker preWalker : preWalkers) {
-                preWalker.preWalkUnaryOp(unaryOpExprNode);
-            }
-
-            visitChildren(unaryOpExprNode);
-
-            for (ASTPostWalker postWalker : postWalkers) {
-                postWalker.postWalkUnaryOp(unaryOpExprNode);
-            }
+            visit(functionCallNode);
         }
 
         @Override
         public void visitFieldAccess(FieldAccessNode fieldAccessNode) {
-            for (ASTPreWalker preWalker : preWalkers) {
-                preWalker.preWalkFieldAccess(fieldAccessNode);
-            }
-
-            visitChildren(fieldAccessNode);
-
-            for (ASTPostWalker postWalker : postWalkers) {
-                postWalker.postWalkFieldAccess(fieldAccessNode);
-            }
+            visit(fieldAccessNode);
         }
 
         @Override
         public void visitIntExprNode(IntExprNode integerNode) {
-            for (ASTPreWalker preWalker : preWalkers) {
-                preWalker.preWalkIntExpr(integerNode);
-            }
-
-            visitChildren(integerNode);
-
-            for (ASTPostWalker postWalker : postWalkers) {
-                postWalker.postWalkIntExpr(integerNode);
-            }
+            visit(integerNode);
         }
 
         @Override
         public void visitBoolExprNode(BoolExprNode booleanNode) {
-            for (ASTPreWalker preWalker : preWalkers) {
-                preWalker.preWalkBoolExpr(booleanNode);
-            }
-
-            visitChildren(booleanNode);
-
-            for (ASTPostWalker postWalker : postWalkers) {
-                postWalker.postWalkBoolExpr(booleanNode);
-            }
+            visit(booleanNode);
         }
 
         @Override
         public void visitStringExprNode(StringExprNode stringExprNode) {
-            for (ASTPreWalker preWalker : preWalkers) {
-                preWalker.preWalkStringExpr(stringExprNode);
-            }
-
-            visitChildren(stringExprNode);
-
-            for (ASTPostWalker postWalker : postWalkers) {
-                postWalker.postWalkStringExpr(stringExprNode);
-            }
+            visit(stringExprNode);
         }
 
         @Override
         public void visitVariableReferenceNode(VariableReferenceNode variableReferenceNode) {
-            for (ASTPreWalker preWalker : preWalkers) {
-                preWalker.preWalkVarRef(variableReferenceNode);
-            }
-
-            visitChildren(variableReferenceNode);
-
-            for (ASTPostWalker postWalker : postWalkers) {
-                postWalker.postWalkVarRef(variableReferenceNode);
-            }
+            visit(variableReferenceNode);
         }
     }
 
-    private static class InferredWalker implements ASTPreWalker, ASTPostWalker {
-        private final WalkFunctions<ProgramNode> programNodeWalkFunctions;
-        private final WalkFunctions<FunctionExprNode> functionExprNodeWalkFunctions;
-        private final WalkFunctions<VariableDefinitionNode> variableDefinitionNodeWalkFunctions;
-        private final WalkFunctions<VariableDeclarationNode> variableDeclarationNodeWalkFunctions;
-        private final WalkFunctions<ReturnStatementNode> returnStatementNodeWalkFunctions;
-        private final WalkFunctions<FunctionCallNode> functionCallNodeWalkFunctions;
-        private final WalkFunctions<DoStatementNode> doStatementNodeWalkFunctions;
-        private final WalkFunctions<IfStatementNode> ifStatementNodeWalkFunctions;
-        private final WalkFunctions<BinOpExprNode> binOpExprNodeWalkFunctions;
-        private final WalkFunctions<UnaryOpExprNode> unaryOpExprNodeWalkFunctions;
-        private final WalkFunctions<FieldAccessNode> fieldAccessNodeWalkFunctions;
-        private final WalkFunctions<IntExprNode> intExprNodeWalkFunctions;
-        private final WalkFunctions<BoolExprNode> boolExprNodeWalkFunctions;
-        private final WalkFunctions<StringExprNode> stringExprNodeWalkFunctions;
-        private final WalkFunctions<VariableReferenceNode> variableReferenceNodeWalkFunctions;
-        private final WalkFunctions<BlockStatementNode> blockStatementNodeWalkFunctions;
+    private static class PreWalkerVisitor extends InferredWalker implements ASTNode.ASTVisitor {
+        public PreWalkerVisitor(ASTWalker walker) {
+            super(walker);
+        }
+
+        @Override
+        public void visitProgram(ProgramNode programNode) {
+            programNodeWalkFunctions.getPreWalker().accept(programNode);
+        }
+
+        @Override
+        public void visitNativeVarDef(NativeVarDefNode nativeVarDefNode) {
+            nativeVarDefNodeWalkFunctions.getPreWalker().accept(nativeVarDefNode);
+        }
+
+        @Override
+        public void visitFunctionExpr(FunctionExprNode functionExprNode) {
+            functionExprNodeWalkFunctions.getPreWalker().accept(functionExprNode);
+        }
+
+        @Override
+        public void visitVariableDefinition(VariableDefinitionNode variableDefinitionNode) {
+            variableDefinitionNodeWalkFunctions.getPreWalker().accept(variableDefinitionNode);
+        }
+
+        @Override
+        public void visitVariableDeclaration(VariableDeclarationNode variableDeclarationNode) {
+            variableDeclarationNodeWalkFunctions.getPreWalker().accept(variableDeclarationNode);
+        }
+
+        @Override
+        public void visitTypeDefinition(TypeDefinitionNode typeDefinition) {
+            typeDefinitionNodeWalkFunctions.getPreWalker().accept(typeDefinition);
+        }
+
+        @Override
+        public void visitTypeFields(TypeFieldsNode typeFieldsNode) {
+            typeFieldsNodeWalkFunctions.getPreWalker().accept(typeFieldsNode);
+        }
+
+        @Override
+        public void visitFieldDeclaration(FieldDeclarationNode fieldDeclaration) {
+            fieldDeclarationNodeWalkFunctions.getPreWalker().accept(fieldDeclaration);
+        }
+
+        @Override
+        public void visitTypeDeclaration(TypeDeclarationNode typeDeclarationNode) {
+            typeDeclarationNodeWalkFunctions.getPreWalker().accept(typeDeclarationNode);
+        }
+
+        @Override
+        public void visitSimpleTypeReference(TypeReferenceNode.SimpleTypeReferenceNode simpleTypeReferenceNode) {
+            simpleTypeReferenceNodeWalkFunctions.getPreWalker().accept(simpleTypeReferenceNode);
+        }
+
+        @Override
+        public void visitParametrizedTypeReference(TypeReferenceNode.ParametrizedTypeReferenceNode parametrizedTypeReferenceNode) {
+            parametrizedTypeReferenceNodeWalkFunctions.getPreWalker().accept(parametrizedTypeReferenceNode);
+        }
+
+        @Override
+        public void visitFunctionTypeReference(TypeReferenceNode.FunctionTypeReferenceNode functionTypeReferenceNode) {
+            functionTypeReferenceNodeWalkFunctions.getPreWalker().accept(functionTypeReferenceNode);
+        }
+
+        @Override
+        public void visitBlockStatement(BlockStatementNode blockStatementNode) {
+            blockStatementNodeWalkFunctions.getPreWalker().accept(blockStatementNode);
+        }
+
+        @Override
+        public void visitDoStatement(DoStatementNode doStatementNode) {
+            doStatementNodeWalkFunctions.getPreWalker().accept(doStatementNode);
+        }
+
+        @Override
+        public void visitReturnStatement(ReturnStatementNode returnStatementNode) {
+            returnStatementNodeWalkFunctions.getPreWalker().accept(returnStatementNode);
+        }
+
+        @Override
+        public void visitIfStatement(IfStatementNode ifStatementNode) {
+            ifStatementNodeWalkFunctions.getPreWalker().accept(ifStatementNode);
+        }
+
+        @Override
+        public void visitFunctionCallNode(FunctionCallNode functionCallNode) {
+            functionCallNodeWalkFunctions.getPreWalker().accept(functionCallNode);
+        }
+
+        @Override
+        public void visitFieldAccess(FieldAccessNode fieldAccessNode) {
+            fieldAccessNodeWalkFunctions.getPreWalker().accept(fieldAccessNode);
+        }
+
+        @Override
+        public void visitIntExprNode(IntExprNode integerNode) {
+            intExprNodeWalkFunctions.getPreWalker().accept(integerNode);
+        }
+
+        @Override
+        public void visitBoolExprNode(BoolExprNode booleanNode) {
+            boolExprNodeWalkFunctions.getPreWalker().accept(booleanNode);
+        }
+
+        @Override
+        public void visitStringExprNode(StringExprNode stringExprNode) {
+            stringExprNodeWalkFunctions.getPreWalker().accept(stringExprNode);
+        }
+
+        @Override
+        public void visitVariableReferenceNode(VariableReferenceNode variableReferenceNode) {
+            variableReferenceNodeWalkFunctions.getPreWalker().accept(variableReferenceNode);
+        }
+    }
+
+    private static class PostWalkerVisitor extends InferredWalker implements ASTNode.ASTVisitor {
+        public PostWalkerVisitor(ASTWalker walker) {
+            super(walker);
+        }
+
+        @Override
+        public void visitProgram(ProgramNode programNode) {
+            programNodeWalkFunctions.getPostWalker().accept(programNode);
+        }
+
+        @Override
+        public void visitNativeVarDef(NativeVarDefNode nativeVarDefNode) {
+            nativeVarDefNodeWalkFunctions.getPostWalker().accept(nativeVarDefNode);
+        }
+
+        @Override
+        public void visitFunctionExpr(FunctionExprNode functionExprNode) {
+            functionExprNodeWalkFunctions.getPostWalker().accept(functionExprNode);
+        }
+
+        @Override
+        public void visitVariableDefinition(VariableDefinitionNode variableDefinitionNode) {
+            variableDefinitionNodeWalkFunctions.getPostWalker().accept(variableDefinitionNode);
+        }
+
+        @Override
+        public void visitVariableDeclaration(VariableDeclarationNode variableDeclarationNode) {
+            variableDeclarationNodeWalkFunctions.getPostWalker().accept(variableDeclarationNode);
+        }
+
+        @Override
+        public void visitTypeDefinition(TypeDefinitionNode typeDefinition) {
+            typeDefinitionNodeWalkFunctions.getPostWalker().accept(typeDefinition);
+        }
+
+        @Override
+        public void visitTypeFields(TypeFieldsNode typeFieldsNode) {
+            typeFieldsNodeWalkFunctions.getPostWalker().accept(typeFieldsNode);
+        }
+
+        @Override
+        public void visitFieldDeclaration(FieldDeclarationNode fieldDeclaration) {
+            fieldDeclarationNodeWalkFunctions.getPostWalker().accept(fieldDeclaration);
+        }
+
+        @Override
+        public void visitTypeDeclaration(TypeDeclarationNode typeDeclarationNode) {
+            typeDeclarationNodeWalkFunctions.getPostWalker().accept(typeDeclarationNode);
+        }
+
+        @Override
+        public void visitSimpleTypeReference(TypeReferenceNode.SimpleTypeReferenceNode simpleTypeReferenceNode) {
+            simpleTypeReferenceNodeWalkFunctions.getPostWalker().accept(simpleTypeReferenceNode);
+        }
+
+        @Override
+        public void visitParametrizedTypeReference(TypeReferenceNode.ParametrizedTypeReferenceNode parametrizedTypeReferenceNode) {
+            parametrizedTypeReferenceNodeWalkFunctions.getPostWalker().accept(parametrizedTypeReferenceNode);
+        }
+
+        @Override
+        public void visitFunctionTypeReference(TypeReferenceNode.FunctionTypeReferenceNode functionTypeReferenceNode) {
+            functionTypeReferenceNodeWalkFunctions.getPostWalker().accept(functionTypeReferenceNode);
+        }
+
+        @Override
+        public void visitBlockStatement(BlockStatementNode blockStatementNode) {
+            blockStatementNodeWalkFunctions.getPostWalker().accept(blockStatementNode);
+        }
+
+        @Override
+        public void visitDoStatement(DoStatementNode doStatementNode) {
+            doStatementNodeWalkFunctions.getPostWalker().accept(doStatementNode);
+        }
+
+        @Override
+        public void visitReturnStatement(ReturnStatementNode returnStatementNode) {
+            returnStatementNodeWalkFunctions.getPostWalker().accept(returnStatementNode);
+        }
+
+        @Override
+        public void visitIfStatement(IfStatementNode ifStatementNode) {
+            ifStatementNodeWalkFunctions.getPostWalker().accept(ifStatementNode);
+        }
+
+        @Override
+        public void visitFunctionCallNode(FunctionCallNode functionCallNode) {
+            functionCallNodeWalkFunctions.getPostWalker().accept(functionCallNode);
+        }
+
+        @Override
+        public void visitFieldAccess(FieldAccessNode fieldAccessNode) {
+            fieldAccessNodeWalkFunctions.getPostWalker().accept(fieldAccessNode);
+        }
+
+        @Override
+        public void visitIntExprNode(IntExprNode integerNode) {
+            intExprNodeWalkFunctions.getPostWalker().accept(integerNode);
+        }
+
+        @Override
+        public void visitBoolExprNode(BoolExprNode booleanNode) {
+            boolExprNodeWalkFunctions.getPostWalker().accept(booleanNode);
+        }
+
+        @Override
+        public void visitStringExprNode(StringExprNode stringExprNode) {
+            stringExprNodeWalkFunctions.getPostWalker().accept(stringExprNode);
+        }
+
+        @Override
+        public void visitVariableReferenceNode(VariableReferenceNode variableReferenceNode) {
+            variableReferenceNodeWalkFunctions.getPostWalker().accept(variableReferenceNode);
+        }
+    }
+
+    private static class InferredWalker {
+        final WalkFunctions<ProgramNode> programNodeWalkFunctions;
+        final WalkFunctions<NativeVarDefNode> nativeVarDefNodeWalkFunctions;
+        final WalkFunctions<TypeDefinitionNode> typeDefinitionNodeWalkFunctions;
+        final WalkFunctions<TypeFieldsNode> typeFieldsNodeWalkFunctions;
+        final WalkFunctions<FieldDeclarationNode> fieldDeclarationNodeWalkFunctions;
+        final WalkFunctions<TypeDeclarationNode> typeDeclarationNodeWalkFunctions;
+        final WalkFunctions<TypeReferenceNode.SimpleTypeReferenceNode> simpleTypeReferenceNodeWalkFunctions;
+        final WalkFunctions<TypeReferenceNode.ParametrizedTypeReferenceNode> parametrizedTypeReferenceNodeWalkFunctions;
+        final WalkFunctions<TypeReferenceNode.FunctionTypeReferenceNode> functionTypeReferenceNodeWalkFunctions;
+        final WalkFunctions<FunctionExprNode> functionExprNodeWalkFunctions;
+        final WalkFunctions<VariableDefinitionNode> variableDefinitionNodeWalkFunctions;
+        final WalkFunctions<VariableDeclarationNode> variableDeclarationNodeWalkFunctions;
+        final WalkFunctions<ReturnStatementNode> returnStatementNodeWalkFunctions;
+        final WalkFunctions<FunctionCallNode> functionCallNodeWalkFunctions;
+        final WalkFunctions<DoStatementNode> doStatementNodeWalkFunctions;
+        final WalkFunctions<IfStatementNode> ifStatementNodeWalkFunctions;
+        final WalkFunctions<FieldAccessNode> fieldAccessNodeWalkFunctions;
+        final WalkFunctions<IntExprNode> intExprNodeWalkFunctions;
+        final WalkFunctions<BoolExprNode> boolExprNodeWalkFunctions;
+        final WalkFunctions<StringExprNode> stringExprNodeWalkFunctions;
+        final WalkFunctions<VariableReferenceNode> variableReferenceNodeWalkFunctions;
+        final WalkFunctions<BlockStatementNode> blockStatementNodeWalkFunctions;
 
         public InferredWalker(ASTWalker astWalker) {
             this.programNodeWalkFunctions = getWalker(astWalker::programWalk);
+            this.nativeVarDefNodeWalkFunctions = getWalker(astWalker::nativeVarDefWalk);
+            this.typeDefinitionNodeWalkFunctions = getWalker(astWalker::typeDefnWalk);
+            this.typeFieldsNodeWalkFunctions = getWalker(astWalker::typeFieldsWalk);
+            this.fieldDeclarationNodeWalkFunctions = getWalker(astWalker::fieldDeclWalk);
+            this.typeDeclarationNodeWalkFunctions = getWalker(astWalker::typeDeclWalk);
+            this.simpleTypeReferenceNodeWalkFunctions = getWalker(astWalker::simpleTypeRefWalk);
+            this.parametrizedTypeReferenceNodeWalkFunctions = getWalker(astWalker::parTypeRefWalk);
+            this.functionTypeReferenceNodeWalkFunctions = getWalker(astWalker::funcTypeRefWalk);
             this.functionExprNodeWalkFunctions = getWalker(astWalker::functionExprWalk);
             this.variableDefinitionNodeWalkFunctions = getWalker(astWalker::varDefnWalk);
             this.variableDeclarationNodeWalkFunctions = getWalker(astWalker::varDeclWalk);
@@ -300,8 +450,6 @@ public final class Walker {
             this.doStatementNodeWalkFunctions = getWalker(astWalker::doWalk);
             this.functionCallNodeWalkFunctions = getWalker(astWalker::fnCallWalk);
             this.ifStatementNodeWalkFunctions = getWalker(astWalker::ifStmtWalk);
-            this.binOpExprNodeWalkFunctions = getWalker(astWalker::binOpWalk);
-            this.unaryOpExprNodeWalkFunctions = getWalker(astWalker::unaryOpWalk);
             this.fieldAccessNodeWalkFunctions = getWalker(astWalker::fieldAccessWalk);
             this.intExprNodeWalkFunctions = getWalker(astWalker::intExprWalk);
             this.boolExprNodeWalkFunctions = getWalker(astWalker::boolExprWalk);
@@ -310,172 +458,10 @@ public final class Walker {
             this.blockStatementNodeWalkFunctions = getWalker(astWalker::blockStmtWalk);
         }
 
-        private <T extends ASTNode> WalkFunctions<T> getWalker(
-                Consumer<WalkFunctions<T>> walkModifier) {
-
+        private <T extends ASTNode> WalkFunctions<T> getWalker(Consumer<WalkFunctions<T>> walkModifier) {
             WalkFunctions<T> blank = new WalkFunctions<>();
             walkModifier.accept(blank);
             return blank;
-        }
-
-        @Override
-        public void preWalkProgram(ProgramNode programNode) {
-            programNodeWalkFunctions.getPreWalker().accept(programNode);
-        }
-
-        @Override
-        public void preWalkFunctionExpr(FunctionExprNode functionExprNode) {
-            functionExprNodeWalkFunctions.getPreWalker().accept(functionExprNode);
-        }
-
-        @Override
-        public void preWalkVariableDefn(VariableDefinitionNode variableDefinitionNode) {
-            variableDefinitionNodeWalkFunctions.getPreWalker().accept(variableDefinitionNode);
-        }
-
-        @Override
-        public void preWalkVariableDecl(VariableDeclarationNode variableDeclarationNode) {
-            variableDeclarationNodeWalkFunctions.getPreWalker().accept(variableDeclarationNode);
-        }
-
-        @Override
-        public void preWalkReturnStmt(ReturnStatementNode returnStatementNode) {
-            returnStatementNodeWalkFunctions.getPreWalker().accept(returnStatementNode);
-        }
-
-        @Override
-        public void preWalkFnCall(FunctionCallNode functionCallNode) {
-            functionCallNodeWalkFunctions.getPreWalker().accept(functionCallNode);
-        }
-
-        @Override
-        public void preWalkIfStmt(IfStatementNode ifStatementNode) {
-            ifStatementNodeWalkFunctions.getPreWalker().accept(ifStatementNode);
-        }
-
-        @Override
-        public void preWalkBinOp(BinOpExprNode binOpExprNode) {
-            binOpExprNodeWalkFunctions.getPreWalker().accept(binOpExprNode);
-        }
-
-        @Override
-        public void preWalkUnaryOp(UnaryOpExprNode unaryOpExprNode) {
-            unaryOpExprNodeWalkFunctions.getPreWalker().accept(unaryOpExprNode);
-        }
-
-        @Override
-        public void preWalkFieldAccess(FieldAccessNode fieldAccessNode) {
-            fieldAccessNodeWalkFunctions.getPreWalker().accept(fieldAccessNode);
-        }
-
-        @Override
-        public void preWalkIntExpr(IntExprNode integerNode) {
-            intExprNodeWalkFunctions.getPreWalker().accept(integerNode);
-        }
-
-        @Override
-        public void preWalkBoolExpr(BoolExprNode booleanNode) {
-            boolExprNodeWalkFunctions.getPreWalker().accept(booleanNode);
-        }
-
-        @Override
-        public void preWalkStringExpr(StringExprNode stringExprNode) {
-            stringExprNodeWalkFunctions.getPreWalker().accept(stringExprNode);
-        }
-
-        @Override
-        public void preWalkVarRef(VariableReferenceNode variableReferenceNode) {
-            variableReferenceNodeWalkFunctions.getPreWalker().accept(variableReferenceNode);
-        }
-
-        @Override
-        public void preWalkDoStmt(DoStatementNode doStatementNode) {
-            doStatementNodeWalkFunctions.getPreWalker().accept(doStatementNode);
-        }
-
-        @Override
-        public void preWalkBlockStmt(BlockStatementNode blockStatementNode) {
-            blockStatementNodeWalkFunctions.getPreWalker().accept(blockStatementNode);
-        }
-
-        @Override
-        public void postWalkProgram(ProgramNode programNode) {
-            programNodeWalkFunctions.getPostWalker().accept(programNode);
-        }
-
-        @Override
-        public void postWalkFunctionExpr(FunctionExprNode functionExprNode) {
-            functionExprNodeWalkFunctions.getPostWalker().accept(functionExprNode);
-        }
-
-        @Override
-        public void postWalkVariableDefn(VariableDefinitionNode variableDefinitionNode) {
-            variableDefinitionNodeWalkFunctions.getPostWalker().accept(variableDefinitionNode);
-        }
-
-        @Override
-        public void postWalkVariableDecl(VariableDeclarationNode variableDeclarationNode) {
-            variableDeclarationNodeWalkFunctions.getPostWalker().accept(variableDeclarationNode);
-        }
-
-        @Override
-        public void postWalkReturnStmt(ReturnStatementNode returnStatementNode) {
-            returnStatementNodeWalkFunctions.getPostWalker().accept(returnStatementNode);
-        }
-
-        @Override
-        public void postWalkFnCall(FunctionCallNode functionCallNode) {
-            functionCallNodeWalkFunctions.getPostWalker().accept(functionCallNode);
-        }
-
-        @Override
-        public void postWalkIfStmt(IfStatementNode ifStatementNode) {
-            ifStatementNodeWalkFunctions.getPostWalker().accept(ifStatementNode);
-        }
-
-        @Override
-        public void postWalkBinOp(BinOpExprNode binOpExprNode) {
-            binOpExprNodeWalkFunctions.getPostWalker().accept(binOpExprNode);
-        }
-
-        @Override
-        public void postWalkUnaryOp(UnaryOpExprNode unaryOpExprNode) {
-            unaryOpExprNodeWalkFunctions.getPostWalker().accept(unaryOpExprNode);
-        }
-
-        @Override
-        public void postWalkFieldAccess(FieldAccessNode fieldAccessNode) {
-            fieldAccessNodeWalkFunctions.getPostWalker().accept(fieldAccessNode);
-        }
-
-        @Override
-        public void postWalkIntExpr(IntExprNode integerNode) {
-            intExprNodeWalkFunctions.getPostWalker().accept(integerNode);
-        }
-
-        @Override
-        public void postWalkBoolExpr(BoolExprNode booleanNode) {
-            boolExprNodeWalkFunctions.getPostWalker().accept(booleanNode);
-        }
-
-        @Override
-        public void postWalkStringExpr(StringExprNode stringExprNode) {
-            stringExprNodeWalkFunctions.getPostWalker().accept(stringExprNode);
-        }
-
-        @Override
-        public void postWalkVarRef(VariableReferenceNode variableReferenceNode) {
-            variableReferenceNodeWalkFunctions.getPostWalker().accept(variableReferenceNode);
-        }
-
-        @Override
-        public void postWalkDoStmt(DoStatementNode doStatementNode) {
-            doStatementNodeWalkFunctions.getPostWalker().accept(doStatementNode);
-        }
-
-        @Override
-        public void postWalkBlockStmt(BlockStatementNode blockStatementNode) {
-            blockStatementNodeWalkFunctions.getPostWalker().accept(blockStatementNode);
         }
     }
 }
