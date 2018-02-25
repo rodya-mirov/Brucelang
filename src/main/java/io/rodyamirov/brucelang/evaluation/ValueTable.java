@@ -1,16 +1,18 @@
 package io.rodyamirov.brucelang.evaluation;
 
 import io.rodyamirov.brucelang.ast.VariableDeclarationNode;
+import io.rodyamirov.brucelang.util.collections.Stack;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class ValueTable {
     private final Map<String, Object> storedValues;
 
-    public ValueTable() {
-        this.storedValues = new HashMap<>();
+    public ValueTable(Map<String, Consumer<Stack<Object>>> nativeExprs) {
+        this.storedValues = new HashMap<>(nativeExprs);
     }
 
     private ValueTable(ValueTable toCopy) {
@@ -23,7 +25,8 @@ public class ValueTable {
         Object value = storedValues.get(fullName);
 
         if (value == null) {
-            throw new RuntimeException("Access before store! Static analysis should have prevented this!");
+            throw new RuntimeException(
+                    String.format("Accessed value '%s' but no value was stored!", fullName));
         }
 
         return value;
@@ -48,8 +51,12 @@ public class ValueTable {
                 throw new IllegalStateException("Cannot modify after building!");
             }
 
-            this.valueTable.storedValues
+            Object oldValue = this.valueTable.storedValues
                     .put(variableDeclarationNode.getCanonicalName(), value);
+
+            if (oldValue != null) {
+                throw new IllegalStateException("Cannot modify a stored value, for any reason!");
+            }
 
             return this;
         }

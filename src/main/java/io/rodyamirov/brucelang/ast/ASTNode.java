@@ -16,7 +16,7 @@ public abstract class ASTNode {
 
     public abstract List<? extends ASTNode> getChildren();
 
-    public void setNamespace(@Nonnull Namespace namespace) {
+    public void setNamespace(Namespace namespace) {
         this.namespace = namespace;
     }
 
@@ -32,10 +32,21 @@ public abstract class ASTNode {
     public interface ASTVisitor {
         void visitProgram(ProgramNode programNode);
 
-        void visitFunctionExpr(FunctionExprNode functionDefinitionNode);
+        void visitFunctionExpr(FunctionExprNode functionExprNode);
         void visitVariableDefinition(VariableDefinitionNode variableDefinitionNode);
 
         void visitVariableDeclaration(VariableDeclarationNode variableDeclarationNode);
+
+        void visitTypeDeclaration(TypeDeclarationNode typeDeclarationNode);
+        void visitTypeDefinition(TypeDefinitionNode typeDefinition);
+        void visitTypeFields(TypeFieldsNode typeFieldsNode);
+        void visitFieldDeclaration(FieldDeclarationNode fieldDeclaration);
+
+        void visitSimpleTypeReference(TypeReferenceNode.SimpleTypeReferenceNode simpleTypeReferenceNode);
+        void visitParametrizedTypeReference(TypeReferenceNode.ParametrizedTypeReferenceNode parametrizedTypeReferenceNode);
+        void visitFunctionTypeReference(TypeReferenceNode.FunctionTypeReferenceNode functionTypeReferenceNode);
+
+        void visitNativeVarDef(NativeVarDefNode nativeVarDefNode);
 
         void visitBlockStatement(BlockStatementNode blockStatementNode);
         void visitDoStatement(DoStatementNode doStatementNode);
@@ -43,8 +54,6 @@ public abstract class ASTNode {
         void visitIfStatement(IfStatementNode ifStatementNode);
 
         void visitFunctionCallNode(FunctionCallNode functionCallNode);
-        void visitBinOpExprNode(BinOpExprNode binOpExprNode);
-        void visitUnaryOpExprNode(UnaryOpExprNode unaryOpExprNode);
 
         void visitFieldAccess(FieldAccessNode fieldAccessNode);
 

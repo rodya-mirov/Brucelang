@@ -6,16 +6,11 @@ import java.util.List;
 /**
  * Top level node of the entire program.
  */
-public final class ProgramNode extends ASTNode implements StatementListHolder {
+public final class ProgramNode extends ASTNode {
     private final List<StatementNode> statements;
 
     public ProgramNode(@Nonnull List<StatementNode> statements) {
         this.statements = statements;
-    }
-
-    @Override
-    public void insertStatementNode(int index, StatementNode statementNode) {
-        statements.add(index, statementNode);
     }
 
     @Override

@@ -1,17 +1,17 @@
 package io.rodyamirov.brucelang.evaluation;
 
-import io.rodyamirov.brucelang.types.TypeDeclaration;
+import io.rodyamirov.brucelang.ast.TypeReferenceNode;
 
 public class TypedValue {
-    private final TypeDeclaration type;
+    private final TypeReferenceNode type;
     private final Object value;
 
-    public TypedValue(TypeDeclaration type, Object value) {
+    public TypedValue(TypeReferenceNode type, Object value) {
         this.type = type;
         this.value = value;
     }
 
-    public TypeDeclaration getType() {
+    public TypeReferenceNode getType() {
         return type;
     }
 

@@ -29,7 +29,7 @@ public final class VariableReferenceNode extends ExpressionNode {
     }
 
     @Override
-    public List<ASTNode> getChildren() {
+    public List<ASTNode> getExtendedChildren() {
         return Collections.emptyList();
     }
 }

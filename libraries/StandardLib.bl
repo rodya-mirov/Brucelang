@@ -5,5 +5,25 @@
     Other libraries can be included in separate files.
  */
 
+declare type Integer {}
+declare type Boolean {}
+declare type String {}
+
+declare native add: Fn(Integer, Integer) -> Integer;
+declare native subtract: Fn(Integer, Integer) -> Integer;
+declare native multiply: Fn(Integer, Integer) -> Integer;
+declare native divide: Fn(Integer, Integer) -> Integer;
+
+declare native lt: Fn(Integer, Integer) -> Boolean;
+declare native lte: Fn(Integer, Integer) -> Boolean;
+declare native gt: Fn(Integer, Integer) -> Boolean;
+declare native gte: Fn(Integer, Integer) -> Boolean;
+declare native eq: Fn(Integer, Integer) -> Boolean;
+declare native neq: Fn(Integer, Integer) -> Boolean;
+
+declare native and: Fn(Boolean, Boolean) -> Boolean;
+declare native or: Fn(Boolean, Boolean) -> Boolean;
+declare native not: Fn(Boolean) -> Boolean;
+
 // Just a placeholder print so we can see the loading is working
 do "Standard lib is loaded!";

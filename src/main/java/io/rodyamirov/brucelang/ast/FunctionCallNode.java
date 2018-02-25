@@ -30,7 +30,7 @@ public final class FunctionCallNode extends ExpressionNode {
     }
 
     @Override
-    public List<ExpressionNode> getChildren() {
+    public List<ExpressionNode> getExtendedChildren() {
         List<ExpressionNode> out = new ArrayList<>(arguments.size() + 1);
 
         out.addAll(arguments);

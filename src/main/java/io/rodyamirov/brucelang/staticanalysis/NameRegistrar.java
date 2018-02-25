@@ -1,29 +1,37 @@
 package io.rodyamirov.brucelang.staticanalysis;
 
 import io.rodyamirov.brucelang.ast.ASTNode;
-import io.rodyamirov.brucelang.ast.BinOpExprNode;
 import io.rodyamirov.brucelang.ast.BlockStatementNode;
 import io.rodyamirov.brucelang.ast.BoolExprNode;
 import io.rodyamirov.brucelang.ast.DoStatementNode;
 import io.rodyamirov.brucelang.ast.FieldAccessNode;
+import io.rodyamirov.brucelang.ast.FieldDeclarationNode;
 import io.rodyamirov.brucelang.ast.FunctionCallNode;
 import io.rodyamirov.brucelang.ast.FunctionExprNode;
 import io.rodyamirov.brucelang.ast.IfStatementNode;
 import io.rodyamirov.brucelang.ast.IntExprNode;
+import io.rodyamirov.brucelang.ast.NativeVarDefNode;
 import io.rodyamirov.brucelang.ast.ProgramNode;
 import io.rodyamirov.brucelang.ast.ReturnStatementNode;
 import io.rodyamirov.brucelang.ast.StringExprNode;
-import io.rodyamirov.brucelang.ast.UnaryOpExprNode;
+import io.rodyamirov.brucelang.ast.TypeDeclarationNode;
+import io.rodyamirov.brucelang.ast.TypeDefinitionNode;
+import io.rodyamirov.brucelang.ast.TypeFieldsNode;
+import io.rodyamirov.brucelang.ast.TypeReferenceNode;
 import io.rodyamirov.brucelang.ast.VariableDeclarationNode;
 import io.rodyamirov.brucelang.ast.VariableDefinitionNode;
 import io.rodyamirov.brucelang.ast.VariableReferenceNode;
 import io.rodyamirov.brucelang.astexceptions.AstException;
+import io.rodyamirov.brucelang.astexceptions.NameNotDefinedException;
 import io.rodyamirov.brucelang.astwalkers.ASTWalker;
 import io.rodyamirov.brucelang.astwalkers.Walker;
 import io.rodyamirov.brucelang.util.collections.LinkedQueue;
 import io.rodyamirov.brucelang.util.collections.Queue;
 
 public class NameRegistrar {
+    // the name of the root namespace
+    public static final String GLOBAL = "global";
+
     private NameRegistrar() {
     }
 
@@ -35,10 +43,10 @@ public class NameRegistrar {
     }
 
     public static class UseBeforeDefinedException extends AstException {
-        public UseBeforeDefinedException(VariableReferenceNode variableReferenceNode) {
-            super(variableReferenceNode,
+        public UseBeforeDefinedException(ASTNode referenceNode, String name) {
+            super(referenceNode,
                     "Reference '%s' in namespace '%s' is not yet defined!",
-                    variableReferenceNode.getVarName(), variableReferenceNode.getNamespace().getFullName());
+                    name, referenceNode.getNamespace().getFullName());
         }
     }
 
@@ -75,9 +83,67 @@ public class NameRegistrar {
         @Override
         public void programWalk(WalkFunctions<ProgramNode> walkFunctions) {
             walkFunctions.preWalker(programNode -> {
-                this.currentContext = new Namespace("global");
+                this.currentContext = new Namespace(GLOBAL);
                 useContext(programNode);
             });
+        }
+
+        @Override
+        public void nativeVarDefWalk(WalkFunctions<NativeVarDefNode> walkFunctions) {
+            walkFunctions.preWalker(this::useContext);
+        }
+
+        @Override
+        public void typeDefnWalk(WalkFunctions<TypeDefinitionNode> walkFunctions) {
+            walkFunctions.preWalker(this::useContext);
+        }
+
+        @Override
+        public void typeFieldsWalk(WalkFunctions<TypeFieldsNode> walkFunctions) {
+            walkFunctions.preWalker(typeFieldsNode -> {
+                useContext(typeFieldsNode);
+                this.currentContext = currentContext.makeTypeChild(typeFieldsNode);
+            });
+
+            walkFunctions.postWalker(typeFieldsNode -> {
+                currentContext = currentContext.getParent();
+            });
+        }
+
+        @Override
+        public void fieldDeclWalk(WalkFunctions<FieldDeclarationNode> walkFunctions) {
+            walkFunctions.preWalker(this::useContext);
+        }
+
+        @Override
+        public void typeDeclWalk(WalkFunctions<TypeDeclarationNode> walkFunctions) {
+            walkFunctions.preWalker(typeDeclarationNode -> {
+                useContext(typeDeclarationNode);
+                currentContext.register(typeDeclarationNode);
+            });
+        }
+
+        @Override
+        public void simpleTypeRefWalk(WalkFunctions<TypeReferenceNode.SimpleTypeReferenceNode> walkFunctions) {
+            walkFunctions.preWalker(simpleTypeReferenceNode -> {
+                useContext(simpleTypeReferenceNode);
+
+                try {
+                    currentContext.getTypeDeclaration(simpleTypeReferenceNode.getName());
+                } catch (NameNotDefinedException nnde) {
+                    throw new UseBeforeDefinedException(simpleTypeReferenceNode, simpleTypeReferenceNode.getName());
+                }
+            });
+        }
+
+        @Override
+        public void parTypeRefWalk(WalkFunctions<TypeReferenceNode.ParametrizedTypeReferenceNode> walkFunctions) {
+            walkFunctions.preWalker(this::useContext);
+        }
+
+        @Override
+        public void funcTypeRefWalk(WalkFunctions<TypeReferenceNode.FunctionTypeReferenceNode> walkFunctions) {
+            walkFunctions.preWalker(this::useContext);
         }
 
         @Override
@@ -126,16 +192,6 @@ public class NameRegistrar {
         }
 
         @Override
-        public void binOpWalk(WalkFunctions<BinOpExprNode> walkFunctions) {
-            walkFunctions.preWalker(this::useContext);
-        }
-
-        @Override
-        public void unaryOpWalk(WalkFunctions<UnaryOpExprNode> walkFunctions) {
-            walkFunctions.preWalker(this::useContext);
-        }
-
-        @Override
         public void fieldAccessWalk(WalkFunctions<FieldAccessNode> walkFunctions) {
             walkFunctions.preWalker(this::useContext);
         }
@@ -160,8 +216,10 @@ public class NameRegistrar {
             walkFunctions.preWalker(variableReferenceNode -> {
                 useContext(variableReferenceNode);
 
-                if (!currentContext.nameIsDefined(variableReferenceNode.getVarName())) {
-                    throw new UseBeforeDefinedException(variableReferenceNode);
+                try {
+                    currentContext.getVariableDeclaration(variableReferenceNode.getVarName());
+                } catch (NameNotDefinedException nnde) {
+                    throw new UseBeforeDefinedException(variableReferenceNode, variableReferenceNode.getVarName());
                 }
             });
         }
