@@ -1,4 +1,5 @@
-
+// this file is experimental; it will not parse, it is only one possible way to describe
+// what working with types might look like
 let native type String = {
     length: Fn<Integer>
 }
