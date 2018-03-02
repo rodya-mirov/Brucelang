@@ -1,0 +1,15 @@
+let list: IntList = rangeGet(10);
+
+// not really squares i guess
+let squares = list.map(x: Integer => x*(x-1)); // [0, 2, 6, 12, 20, 30, 42, 56, 72, 90]
+
+do list.size(); // 10
+do list.reduce(0, (acc: Integer, elt: Integer) => acc+elt); // 55
+do squares.filter(x: Integer => x > 10) // [12, 20, 30, 42, 56, 72, 90]
+        .reduce(0, (acc: Integer, elt: Integer) => acc+elt); // 322
+
+do rangeGet(15)
+    .filter(x: Integer => x*x < 100) // [1, 2, ..., 9]
+    .map(x: Integer => { if (x > 5) { return 12; } else { return x; } }) // [1, 2, 3, 4, 5, 12, 12, 12, 12]
+    .reduce(1, (acc:Integer, elt:Integer) => acc + 3*elt); // 1 + 3 + 6 + 9 + 12 + 15 + 36 + 36 + 36 + 36, which is 190
+

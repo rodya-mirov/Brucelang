@@ -10,6 +10,8 @@ import io.rodyamirov.brucelang.staticanalysis.ReturnChecker;
 import io.rodyamirov.brucelang.staticanalysis.TreePrinter;
 import io.rodyamirov.brucelang.types.TypeChecker;
 import io.rodyamirov.brucelang.types.TypeRegistrar;
+import io.rodyamirov.brucelang.util.collections.LinkedQueue;
+import io.rodyamirov.brucelang.util.collections.Queue;
 import io.rodyamirov.brucelang.util.collections.Stack;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -20,11 +22,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 public class Main {
     public static void main(String[] args) throws IOException {
@@ -44,7 +44,7 @@ public class Main {
         ReturnChecker.checkFunctionsReturn(program);
         TypeChecker.assignAndCheckTypes(program);
 
-        System.out.println(TreePrinter.printTree(program, true));
+        // System.out.println(TreePrinter.printTree(program, true));
 
         Evaluator.evaluate(program, makeNativeExprs());
     }
@@ -74,6 +74,72 @@ public class Main {
     // TODO: obviously this is not how we want to do this moving forward
     private static Map<String, Consumer<Stack<Object>>> makeNativeExprs() {
         Map<String, Consumer<Stack<Object>>> out = new HashMap<>();
+
+        out.put("global.rangeGet", makeOneArg((Integer len) -> {
+            List<Integer> outList = new ArrayList<>();
+            for (int i = 1; i <= len; i++) {
+                outList.add(i);
+            }
+            return outList;
+        }));
+
+        out.put("global.IntList.size", makeNoArgMethod((List<Integer> list) -> list.size()));
+        out.put("global.IntList.filter", evalStack -> {
+            List<Integer> baseList = (List) evalStack.pop();
+            Consumer<Stack<Object>> output = nextStack -> {
+                Consumer<Stack<Object>> filter = (Consumer) nextStack.pop();
+
+                List<Integer> filtered = new ArrayList<>();
+                for (Integer i : baseList) {
+                    nextStack.push(i);
+                    filter.accept(nextStack);
+                    Boolean test = (Boolean) nextStack.pop();
+                    if (test) {
+                        filtered.add(i);
+                    }
+                }
+
+                nextStack.push(filtered);
+            };
+            evalStack.push(output);
+        });
+
+        out.put("global.IntList.map", evalStack -> {
+            List<Integer> baseList = (List) evalStack.pop();
+            Consumer<Stack<Object>> output = nextStack -> {
+                Consumer<Stack<Object>> map = (Consumer) nextStack.pop();
+
+                List<Integer> nextList = new ArrayList<>();
+                for (Integer i : baseList) {
+                    nextStack.push(i);
+                    map.accept(nextStack);
+                    Integer mapped = (Integer) nextStack.pop();
+                    nextList.add(mapped);
+                }
+
+                nextStack.push(nextList);
+            };
+            evalStack.push(output);
+        });
+
+        out.put("global.IntList.reduce", evalStack -> {
+            List<Integer> baseList = (List) evalStack.pop();
+            Consumer<Stack<Object>> output = nextStack -> {
+                // note arguments are reversed, because stack
+                Consumer<Stack<Object>> reducer = (Consumer) nextStack.pop();
+                Integer acc = (Integer) nextStack.pop();
+
+                for (Integer i : baseList) {
+                    nextStack.push(acc);
+                    nextStack.push(i);
+                    reducer.accept(nextStack);
+                    acc = (Integer) nextStack.pop();
+                }
+
+                nextStack.push(acc);
+            };
+            evalStack.push(output);
+        });
 
         out.put("global.Boolean.not", makeNoArgMethod((Boolean b) -> !b));
         out.put("global.Boolean.and", makeOneArgMethod((Boolean a, Boolean b) -> a && b));
@@ -116,19 +182,6 @@ public class Main {
     // just used to force java to parse lambdas as consumers
     private static Consumer<Stack<Object>> id(Consumer<Stack<Object>> fn) {
         return fn;
-    }
-
-    private static <T> Consumer<Stack<Object>> makeField(BiConsumer<T, Stack<Object>> fieldStackProcessor) {
-        return evalStack -> {
-            T baseObjValue = (T) evalStack.pop();
-            fieldStackProcessor.accept(baseObjValue, evalStack);
-        };
-    }
-
-    private static Consumer<Stack> makeZeroArg(Supplier<?> function) {
-        return evalStack -> {
-            evalStack.push(function.get());
-        };
     }
 
     private static <T> Consumer<Stack<Object>> makeOneArg(Function<T, Object> function) {

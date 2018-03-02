@@ -34,5 +34,15 @@ declare native type Integer {
     toString: Fn() -> String;
 }
 
+declare native type IntList {
+    map: Fn(Fn(Integer) -> Integer) -> IntList;             // [1, 2, 3].map(x => x*x) is [1, 4, 9]
+    filter: Fn(Fn(Integer) -> Boolean) -> IntList;          // [1, 2, 3].map(x => x>2) is [3]
+    reduce: Fn(Integer, Fn(Integer, Integer) -> Integer) -> Integer;    // [1, 2, 3].reduce(0, (acc, elt) => acc+elt*elt) is 14
+    size: Fn() -> Integer;                                  // [1, 2, 3].size() is 3
+}
+
+// TODO: remove this before deployment! this violates termination guarantees!
+declare native rangeGet: Fn(Integer) -> IntList; // rangeGet(10) is [1, 2, 3, 4, 5, 6, 7, 8, 10]
+
 // Just a placeholder print so we can see the loading is working
 do "Standard lib is loaded!";
