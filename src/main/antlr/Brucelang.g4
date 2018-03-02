@@ -24,7 +24,7 @@ nativeDeclStmt
     ;
 
 typeDefnStmt
-    : DECLARE TYPE ID L_CURLY (fieldDecl)* R_CURLY (SEMI)?
+    : DECLARE NATIVE TYPE ID L_CURLY (fieldDecl)* R_CURLY (SEMI)?
     ;
 
 fieldDecl

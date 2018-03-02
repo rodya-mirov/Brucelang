@@ -20,6 +20,10 @@ public class FieldDeclarationNode extends StatementNode {
         return type;
     }
 
+    public String getCanonicalName() {
+        return getNamespace().getFullName() + "." + this.name;
+    }
+
     @Override
     public void accept(ASTVisitor visitor) {
         visitor.visitFieldDeclaration(this);

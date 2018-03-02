@@ -224,8 +224,12 @@ public class TypeChecker {
 
         @Override
         public void fieldAccessWalk(WalkFunctions<FieldAccessNode> walkFunctions) {
-            walkFunctions.preWalker(NotImplementedException.thrown());
-            walkFunctions.postWalker(NotImplementedException.thrown());
+            walkFunctions.postWalker(fieldAccessNode -> {
+                TypeReferenceNode baseType = fieldAccessNode.getBaseNode().getType();
+                TypeFieldsNode typeDef = fieldAccessNode.getTypeRegistry().getDefinition(baseType);
+                FieldDeclarationNode field = typeDef.getField(fieldAccessNode.getFieldName());
+                fieldAccessNode.setType(field.getType());
+            });
         }
 
         @Override

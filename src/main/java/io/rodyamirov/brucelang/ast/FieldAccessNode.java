@@ -16,10 +16,6 @@ public class FieldAccessNode extends ExpressionNode {
         return baseNode;
     }
 
-    public void setBaseNode(ExpressionNode baseNode) {
-        this.baseNode = baseNode;
-    }
-
     public String getFieldName() {
         return fieldName;
     }
