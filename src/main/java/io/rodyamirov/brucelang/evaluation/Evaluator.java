@@ -202,7 +202,15 @@ public class Evaluator {
 
         @Override
         public void visitFieldAccess(FieldAccessNode fieldAccessNode) {
-            throw new RuntimeException("I don't know about fields rn!");
+            fieldAccessNode.getBaseNode().accept(this);
+
+            TypeReferenceNode typeReference = fieldAccessNode.getBaseNode().getType();
+            FieldDeclarationNode fieldDef = fieldAccessNode.getTypeRegistry()
+                    .getDefinition(typeReference)
+                    .getField(fieldAccessNode.getFieldName());
+
+            Consumer<Stack<Object>> fieldGetter = (Consumer<Stack<Object>>) valueTable.getValue(fieldDef);
+            fieldGetter.accept(evalStack);
         }
 
         @Override

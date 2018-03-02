@@ -9,20 +9,22 @@ import io.rodyamirov.brucelang.staticanalysis.NameRegistrar;
 import io.rodyamirov.brucelang.staticanalysis.ReturnChecker;
 import io.rodyamirov.brucelang.staticanalysis.TreePrinter;
 import io.rodyamirov.brucelang.types.TypeChecker;
+import io.rodyamirov.brucelang.types.TypeRegistrar;
 import io.rodyamirov.brucelang.util.collections.Stack;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class Main {
     public static void main(String[] args) throws IOException {
@@ -38,6 +40,7 @@ public class Main {
         }
 
         NameRegistrar.registerNames(program);
+        TypeRegistrar.registerTypes(program);
         ReturnChecker.checkFunctionsReturn(program);
         TypeChecker.assignAndCheckTypes(program);
 
@@ -72,39 +75,66 @@ public class Main {
     private static Map<String, Consumer<Stack<Object>>> makeNativeExprs() {
         Map<String, Consumer<Stack<Object>>> out = new HashMap<>();
 
-        out.put("global.add", makeTwoArg(BigInteger::add));
-        out.put("global.subtract", makeTwoArg(BigInteger::subtract));
-        out.put("global.multiply", makeTwoArg(BigInteger::multiply));
-        out.put("global.divide", makeTwoArg(BigInteger::divide));
+        out.put("global.Boolean.not", makeNoArgMethod((Boolean b) -> !b));
+        out.put("global.Boolean.and", makeOneArgMethod((Boolean a, Boolean b) -> a && b));
+        out.put("global.Boolean.or", makeOneArgMethod((Boolean a, Boolean b) -> a || b));
 
-        out.put("global.lt", makeTwoArg((BigInteger l, BigInteger r) -> l.compareTo(r) < 0));
-        out.put("global.lte", makeTwoArg((BigInteger l, BigInteger r) -> l.compareTo(r) <= 0));
-        out.put("global.gt", makeTwoArg((BigInteger l, BigInteger r) -> l.compareTo(r) > 0));
-        out.put("global.gte", makeTwoArg((BigInteger l, BigInteger r) -> l.compareTo(r) >= 0));
+        out.put("global.Integer.neg", makeNoArgMethod((Integer a) -> -a));
 
-        out.put("global.eq", makeTwoArg((BigInteger l, BigInteger r) -> l.compareTo(r) == 0));
-        out.put("global.neq", makeTwoArg((BigInteger l, BigInteger r) -> l.compareTo(r) != 0));
+        out.put("global.Integer.add", makeOneArgMethod((Integer a, Integer b) -> a + b));
+        out.put("global.Integer.subtract", makeOneArgMethod((Integer a, Integer b) -> a - b));
+        out.put("global.Integer.multiply", makeOneArgMethod((Integer a, Integer b) -> a * b));
+        out.put("global.Integer.divide", makeOneArgMethod((Integer a, Integer b) -> a / b));
 
-        out.put("global.neg", makeOneArg(BigInteger::negate));
-
-        out.put("global.and", makeTwoArg(Boolean::logicalAnd));
-        out.put("global.or", makeTwoArg(Boolean::logicalOr));
-        out.put("global.not", makeOneArg((Boolean b) -> !b));
+        out.put("global.Integer.lt", makeOneArgMethod((Integer self, Integer other) -> self < other));
+        out.put("global.Integer.lte", makeOneArgMethod((Integer self, Integer other) -> self <= other));
+        out.put("global.Integer.gt", makeOneArgMethod((Integer self, Integer other) -> self > other));
+        out.put("global.Integer.gte", makeOneArgMethod((Integer self, Integer other) -> self >= other));
+        out.put("global.Integer.eq", makeOneArgMethod((Integer self, Integer other) -> self.equals(other)));
+        out.put("global.Integer.neq", makeOneArgMethod((Integer self, Integer other) -> !self.equals(other)));
 
         return out;
+    }
+
+    private static <T> Consumer<Stack<Object>> makeNoArgMethod(Function<T, Object> function) {
+        return evalStack -> {
+            T baseValue = (T) evalStack.pop();
+            evalStack.push(id(stack2 -> stack2.push(function.apply(baseValue))));
+        };
+    }
+
+    private static <T, A1> Consumer<Stack<Object>> makeOneArgMethod(BiFunction<T, A1, Object> function) {
+        return evalStack -> {
+            T baseValue = (T) evalStack.pop();
+            evalStack.push(id(stack2 -> {
+                A1 arg1 = (A1) stack2.pop();
+                stack2.push(function.apply(baseValue, arg1));
+            }));
+        };
+    }
+
+    // just used to force java to parse lambdas as consumers
+    private static Consumer<Stack<Object>> id(Consumer<Stack<Object>> fn) {
+        return fn;
+    }
+
+    private static <T> Consumer<Stack<Object>> makeField(BiConsumer<T, Stack<Object>> fieldStackProcessor) {
+        return evalStack -> {
+            T baseObjValue = (T) evalStack.pop();
+            fieldStackProcessor.accept(baseObjValue, evalStack);
+        };
+    }
+
+    private static Consumer<Stack> makeZeroArg(Supplier<?> function) {
+        return evalStack -> {
+            evalStack.push(function.get());
+        };
     }
 
     private static <T> Consumer<Stack<Object>> makeOneArg(Function<T, Object> function) {
         return evalStack -> {
             List<T> args = getArgs(1, evalStack);
             evalStack.push(function.apply(args.get(0)));
-        };
-    }
-
-    private static <T> Consumer<Stack<Object>> makeTwoArg(BiFunction<T, T, Object> biFunction) {
-        return evalStack -> {
-            List<T> args = getArgs(2, evalStack);
-            evalStack.push(biFunction.apply(args.get(0), args.get(1)));
         };
     }
 

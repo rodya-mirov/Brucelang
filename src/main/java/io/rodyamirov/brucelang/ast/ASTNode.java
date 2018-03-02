@@ -2,12 +2,14 @@ package io.rodyamirov.brucelang.ast;
 
 import io.rodyamirov.brucelang.astexceptions.WrongOrderException;
 import io.rodyamirov.brucelang.staticanalysis.Namespace;
+import io.rodyamirov.brucelang.types.TypeRegistry;
 
 import javax.annotation.Nonnull;
 import java.util.List;
 
 public abstract class ASTNode {
     private Namespace namespace;
+    private TypeRegistry typeRegistry;
 
     protected ASTNode() {
     }
@@ -27,6 +29,19 @@ public abstract class ASTNode {
         }
 
         return namespace;
+    }
+
+    public void setTypeRegistry(TypeRegistry typeRegistry) {
+        this.typeRegistry = typeRegistry;
+    }
+
+    @Nonnull
+    public TypeRegistry getTypeRegistry() {
+        if (typeRegistry == null) {
+            throw new WrongOrderException(this, "Type registry has not yet been created!");
+        }
+
+        return typeRegistry;
     }
 
     public interface ASTVisitor {

@@ -1,5 +1,6 @@
 package io.rodyamirov.brucelang.evaluation;
 
+import io.rodyamirov.brucelang.ast.FieldDeclarationNode;
 import io.rodyamirov.brucelang.ast.VariableDeclarationNode;
 import io.rodyamirov.brucelang.util.collections.Stack;
 
@@ -21,7 +22,16 @@ public class ValueTable {
 
     @Nonnull
     public Object getValue(VariableDeclarationNode variableDeclarationNode) {
-        String fullName = variableDeclarationNode.getCanonicalName();
+        return getValue(variableDeclarationNode.getCanonicalName());
+    }
+
+    @Nonnull
+    public Object getValue(FieldDeclarationNode fieldDeclarationNode) {
+        return getValue(fieldDeclarationNode.getCanonicalName());
+    }
+
+    @Nonnull
+    private Object getValue(String fullName) {
         Object value = storedValues.get(fullName);
 
         if (value == null) {
@@ -66,7 +76,7 @@ public class ValueTable {
                 throw new IllegalStateException("Cannot build twice!");
             }
 
-            this.built = false;
+            this.built = true;
             return valueTable;
         }
     }

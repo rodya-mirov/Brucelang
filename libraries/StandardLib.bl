@@ -5,25 +5,34 @@
     Other libraries can be included in separate files.
  */
 
-declare type Integer {}
-declare type Boolean {}
-declare type String {}
 
-declare native add: Fn(Integer, Integer) -> Integer;
-declare native subtract: Fn(Integer, Integer) -> Integer;
-declare native multiply: Fn(Integer, Integer) -> Integer;
-declare native divide: Fn(Integer, Integer) -> Integer;
+// TODO: would love a "String::length: Fn() -> Integer" but circularity is currently forbidden
+declare native type String {
+}
 
-declare native lt: Fn(Integer, Integer) -> Boolean;
-declare native lte: Fn(Integer, Integer) -> Boolean;
-declare native gt: Fn(Integer, Integer) -> Boolean;
-declare native gte: Fn(Integer, Integer) -> Boolean;
-declare native eq: Fn(Integer, Integer) -> Boolean;
-declare native neq: Fn(Integer, Integer) -> Boolean;
+declare native type Boolean {
+    and: Fn(Boolean) -> Boolean;
+    or: Fn(Boolean) -> Boolean;
+    not: Fn() -> Boolean;
 
-declare native and: Fn(Boolean, Boolean) -> Boolean;
-declare native or: Fn(Boolean, Boolean) -> Boolean;
-declare native not: Fn(Boolean) -> Boolean;
+    toString: Fn() -> String;
+}
+
+declare native type Integer {
+    add: Fn(Integer) -> Integer;
+    subtract: Fn(Integer) -> Integer;
+    multiply: Fn(Integer) -> Integer;
+    divide: Fn(Integer) -> Integer;
+
+    lt: Fn(Integer) -> Boolean;
+    lte: Fn(Integer) -> Boolean;
+    gt: Fn(Integer) -> Boolean;
+    gte: Fn(Integer) -> Boolean;
+    eq: Fn(Integer) -> Boolean;
+    neq: Fn(Integer) -> Boolean;
+
+    toString: Fn() -> String;
+}
 
 // Just a placeholder print so we can see the loading is working
 do "Standard lib is loaded!";

@@ -7,9 +7,7 @@ import io.rodyamirov.brucelang.util.ProgrammerError;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
 import javax.annotation.Nonnull;
-import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -390,12 +388,13 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
             throw new RuntimeException("Wrong parse?");
         }
 
+        ExpressionNode left = (ExpressionNode) ctx.compExpr(0).accept(this);
+        ExpressionNode right = (ExpressionNode) ctx.compExpr(1).accept(this);
+        String opName = lookupBinOp(ctx.BOOL_OP().getText());
+
         return new FunctionCallNode(
-                new VariableReferenceNode(lookupBinOp(ctx.BOOL_OP().getText())),
-                Arrays.asList(
-                        (ExpressionNode) ctx.compExpr(0).accept(this),
-                        (ExpressionNode) ctx.compExpr(1).accept(this))
-        );
+                new FieldAccessNode(left, opName),
+                Collections.singletonList(right));
     }
 
     @Override
@@ -409,11 +408,13 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
             throw new RuntimeException("Wrong parse?");
         }
 
+        ExpressionNode left = (ExpressionNode) ctx.addExpr(0).accept(this);
+        ExpressionNode right = (ExpressionNode) ctx.addExpr(1).accept(this);
+        String opName = lookupBinOp(ctx.COMP_OP().getText());
+
         return new FunctionCallNode(
-                new VariableReferenceNode(lookupBinOp(ctx.COMP_OP().getText())),
-                Arrays.asList(
-                        (ExpressionNode) ctx.addExpr(0).accept(this),
-                        (ExpressionNode) ctx.addExpr(1).accept(this)));
+                new FieldAccessNode(left, opName),
+                Collections.singletonList(right));
     }
 
     /**
@@ -426,11 +427,14 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
         ExpressionNode current = visitMulExpr(ctx.mulExpr(0));
 
         for (int i = 1; i < ctx.mulExpr().size(); i++) {
+            // desugar this to (leftArg).opName(rightArg)
+            String opName = lookupBinOp(ctx.ADD_OP(i-1).getText());
+
+            ExpressionNode rightArg = (ExpressionNode) ctx.mulExpr(i).accept(this);
+
             current = new FunctionCallNode(
-                    new VariableReferenceNode(lookupBinOp(ctx.ADD_OP(i-1).getText())),
-                    Arrays.asList(
-                            current,
-                            (ExpressionNode) ctx.mulExpr(i).accept(this)));
+                    new FieldAccessNode(current, opName),
+                    Collections.singletonList(rightArg));
         }
 
         return current;
@@ -446,10 +450,12 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
         ExpressionNode current = (ExpressionNode) ctx.unaryExpr(0).accept(this);
 
         for (int i = 1; i < ctx.unaryExpr().size(); i++) {
+            String opName = lookupBinOp(ctx.MUL_OP(i-1).getText());
+            ExpressionNode rightArg = (ExpressionNode) ctx.unaryExpr(i).accept(this);
+
             current = new FunctionCallNode(
-                    new VariableReferenceNode(lookupBinOp(ctx.MUL_OP(i-1).getText())),
-                    Arrays.asList(current, (ExpressionNode) ctx.unaryExpr(i).accept(this))
-            );
+                    new FieldAccessNode(current, opName),
+                    Collections.singletonList(rightArg));
         }
 
         return current;
@@ -496,8 +502,10 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
     @Override
     public FunctionCallNode visitNestedUnaryExpr(BrucelangParser.NestedUnaryExprContext ctx) {
         return new FunctionCallNode(
-                new VariableReferenceNode(lookupUnaryOp(ctx.UNARY_OP().getText())),
-                Collections.singletonList((ExpressionNode) ctx.unaryExpr().accept(this)));
+                new FieldAccessNode(
+                        (ExpressionNode) ctx.unaryExpr().accept(this),
+                        lookupUnaryOp(ctx.UNARY_OP().getText())),
+                Collections.emptyList());
     }
 
     /**
@@ -533,7 +541,7 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
         String toParse = ctx.INT().getText();
 
         try {
-            BigInteger value = new BigInteger(toParse);
+            Integer value = new Integer(toParse);
             return new IntExprNode(value);
         } catch (NumberFormatException nfe) {
             // ProgrammerError because the parser/lexer grammar should guarantee this is possible

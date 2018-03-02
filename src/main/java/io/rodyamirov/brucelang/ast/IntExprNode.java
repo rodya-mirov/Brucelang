@@ -1,13 +1,12 @@
 package io.rodyamirov.brucelang.ast;
 
-import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
 
 public final class IntExprNode extends ExpressionNode {
-    private final BigInteger value;
+    private final Integer value;
 
-    public IntExprNode(BigInteger value) {
+    public IntExprNode(Integer value) {
         this.value = value;
     }
 
@@ -16,7 +15,7 @@ public final class IntExprNode extends ExpressionNode {
         visitor.visitIntExprNode(this);
     }
 
-    public BigInteger getValue() {
+    public Integer getValue() {
         return value;
     }
 

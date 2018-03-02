@@ -14,6 +14,10 @@ public class TypeDeclarationNode extends ASTNode {
         return name;
     }
 
+    public String getCanonicalName() {
+        return this.getNamespace() + "." + this.name;
+    }
+
     @Override
     public void accept(ASTVisitor visitor) {
         visitor.visitTypeDeclaration(this);
