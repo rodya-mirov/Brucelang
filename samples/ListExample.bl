@@ -13,3 +13,13 @@ do rangeGet(15)
     .map(x: Integer => { if (x > 5) { return 12; } else { return x; } }) // [1, 2, 3, 4, 5, 12, 12, 12, 12]
     .reduce(1, (acc:Integer, elt:Integer) => acc + 3*elt); // 1 + 3 + 6 + 9 + 12 + 15 + 36 + 36 + 36 + 36, which is 190
 
+
+let pId = <T> => (t: T => t);
+
+do pId<String>("This should work");
+do pId<Integer>(1413836);
+
+let altId<T> = (t: T => t);
+
+do altId<String>("This is better?");
+do altId<Integer>(153) + pId<Integer>(524);

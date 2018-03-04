@@ -31,7 +31,7 @@ public class FunctionExprNode extends ExpressionNode {
         return "$lambda$" + canonicalIds.getAndIncrement();
     }
 
-    public String getAnonName() {
+    private String getAnonName() {
         if (this.anonName == null) {
             this.anonName = makeAnonName();
         }
@@ -44,11 +44,20 @@ public class FunctionExprNode extends ExpressionNode {
         visitor.visitFunctionExpr(this);
     }
 
-    public String getCanonicalName() {
-        if (!isDefExpr()) {
-            throw new WrongOrderException(this, "Does not have a name to refer to!");
+    public String getLocalName() {
+        if (isDefExpr()) {
+            return getDefinedName().getVarName();
+        } else {
+            return getAnonName();
         }
-        return getDefinedName().getCanonicalName();
+    }
+
+    public String getFullName() {
+        if (isDefExpr()) {
+            return getDefinedName().getCanonicalName();
+        } else {
+            return getNamespace().getFullName() + "." + getAnonName();
+        }
     }
 
     @Override

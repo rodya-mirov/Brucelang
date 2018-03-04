@@ -48,8 +48,8 @@ ifStmt
     ;
 
 varDef
-    : LET varDecl SET_EQ expr SEMI              # fullVarDef
-    | LET inferredVarDecl SET_EQ expr SEMI      # inferredVarDef
+    : LET varDecl SET_EQ expr SEMI                  # simpleVarDef
+    | LET varDecl LT idList GT SET_EQ expr SEMI     # parametrizedVarDef
     ;
 
 fnDef
@@ -57,11 +57,8 @@ fnDef
     ;
 
 varDecl
-    : ID COLON typeExpr
-    ;
-
-inferredVarDecl
-    : ID
+    : ID COLON typeExpr             # explicitVarDecl
+    | ID                            # inferredVarDecl
     ;
 
 varDeclList
@@ -73,11 +70,20 @@ typeExpr
     : ID                                                    # simpleType
     | ID LT typeExprList GT                                 # complexType
     | FN L_PAREN typeExprList R_PAREN SM_ARROW typeExpr     # fnType
+    | TYPE_FN L_PAREN idList R_PAREN SM_ARROW typeExpr      # typeFnType
+    // I suspect parens aren't necessary for ambiguity prevention,
+    // but it felt right to be able to use them if I wanted to
+    | L_PAREN typeExpr R_PAREN                              # parenType
     ;
 
 typeExprList
     :                               # noTypes
     | typeExpr (COMMA typeExpr)*    # someTypes
+    ;
+
+idList
+    :                               # noIds
+    | ID (COMMA ID)*                # someIds
     ;
 
 exprList
@@ -86,8 +92,15 @@ exprList
     ;
 
 expr // top-level expression class
-    : lambda                        # lambdaExpression
+    : lambda                        # lambdaExpr
+    | typeLambda                    # typeLambdaExpr
     | linkedBoolExpr                # booleanExpression
+    ;
+
+typeLambda
+    // note there is no "no parens" option; the <T> syntax helps remind you it's a type function
+    : LT idList GT BIG_ARROW blockStmt                  # stmtTypeLambda
+    | LT idList GT BIG_ARROW expr                       # exprTypeLambda
     ;
 
 lambda
@@ -99,30 +112,31 @@ lambda
 
 linkedBoolExpr
     : compExpr                  # fallThroughCompExpr
-    | compExpr BOOL_OP compExpr # boolOpExpr
+    | compExpr boolOp compExpr # boolOpExpr
     ;
 
 compExpr
     : addExpr                   # fallThroughAddExpr
-    | addExpr COMP_OP addExpr   # compOpExpr
+    | addExpr compOp addExpr   # compOpExpr
     ;
 
 addExpr
-    : mulExpr (ADD_OP mulExpr)*
+    : mulExpr (addOp mulExpr)*
     ;
 
 mulExpr
-    : unaryExpr (MUL_OP unaryExpr)*
+    : unaryExpr (mulOp unaryExpr)*
     ;
 
 unaryExpr
     : accessOrCall         # fallThroughAccessOrCall
-    | UNARY_OP unaryExpr   # nestedUnaryExpr
+    | unaryOp unaryExpr   # nestedUnaryExpr
     ;
 
 accessOrCall
     : accessOrCall DOT ID                   # namedFieldAccess
     | accessOrCall L_PAREN exprList R_PAREN # fnCall
+    | accessOrCall LT typeExprList GT       # typeFnCall
     | baseExpr                              # fallThroughBaseExpr
     ;
 
@@ -131,15 +145,15 @@ baseExpr
     | ID                               # variableReference
     | INT                              # numConst
     | STRING_CONST                     # stringConst
-    | BOOL_VAL                         # boolConst
+    | boolVal                         # boolConst
     ;
 
-BOOL_OP   : AND | OR ;
-COMP_OP   : GT | GTE | LT | LTE | EQ | NEQ ;
-BOOL_VAL  : TRUE  | FALSE  ;
-ADD_OP    : PLUS  | MINUS  ;
-MUL_OP    : TIMES | DIVIDE ;
-UNARY_OP  : MINUS | NOT    ;
+boolOp  : AND | OR ;
+compOp  : GT | GTE | LT | LTE | EQ | NEQ ;
+boolVal : TRUE  | FALSE  ;
+addOp   : PLUS  | MINUS  ;
+mulOp   : TIMES | DIVIDE ;
+unaryOp : MINUS | NOT    ;
 
 
 TRUE   : 'true' ;
@@ -158,6 +172,7 @@ LET    : 'let' ;
 TYPE   : 'type' ;
 
 FN     : 'Fn' ;
+TYPE_FN : 'TypeFn' ;
 
 AND    : '&&' ;
 OR     : '||' ;
@@ -165,10 +180,10 @@ PLUS   : '+'  ;
 MINUS  : '-'  ;
 TIMES  : '*'  ;
 DIVIDE : '/'  ;
-LT     : '<'  ;
 LTE    : '<=' ;
-GT     : '>'  ;
+LT     : '<'  ;
 GTE    : '>=' ;
+GT     : '>'  ;
 EQ     : '==' ;
 NEQ    : '!=' ;
 NOT    : '!'  ;

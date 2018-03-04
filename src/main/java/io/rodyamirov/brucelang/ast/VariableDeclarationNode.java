@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.List;
 
 public final class VariableDeclarationNode extends ASTNode implements Typed {
-        private final String varName;
+    private final String varName;
     private TypeReferenceNode typeReference;
 
     public VariableDeclarationNode(String varName, TypeReferenceNode typeReference) {

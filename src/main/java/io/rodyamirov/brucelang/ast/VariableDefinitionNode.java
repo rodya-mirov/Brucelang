@@ -10,6 +10,8 @@ public final class VariableDefinitionNode extends StatementNode {
     public VariableDefinitionNode(VariableDeclarationNode varDecl, ExpressionNode evalExpr) {
         this.variableDeclarationNode = varDecl;
         this.evalExpr = evalExpr;
+
+        evalExpr.assignToName(varDecl);
     }
 
     @Override
@@ -21,17 +23,8 @@ public final class VariableDefinitionNode extends StatementNode {
         return variableDeclarationNode;
     }
 
-    public void setVariableDeclarationNode(
-            VariableDeclarationNode variableDeclarationNode) {
-        this.variableDeclarationNode = variableDeclarationNode;
-    }
-
     public ExpressionNode getEvalExpr() {
         return evalExpr;
-    }
-
-    public void setEvalExpr(ExpressionNode evalExpr) {
-        this.evalExpr = evalExpr;
     }
 
     @Override

@@ -9,16 +9,21 @@ import io.rodyamirov.brucelang.ast.FieldAccessNode;
 import io.rodyamirov.brucelang.ast.FieldDeclarationNode;
 import io.rodyamirov.brucelang.ast.FunctionCallNode;
 import io.rodyamirov.brucelang.ast.FunctionExprNode;
+import io.rodyamirov.brucelang.ast.FunctionTypeReferenceNode;
 import io.rodyamirov.brucelang.ast.IfStatementNode;
 import io.rodyamirov.brucelang.ast.IntExprNode;
 import io.rodyamirov.brucelang.ast.NativeVarDefNode;
+import io.rodyamirov.brucelang.ast.ParametrizedTypeReferenceNode;
 import io.rodyamirov.brucelang.ast.ProgramNode;
 import io.rodyamirov.brucelang.ast.ReturnStatementNode;
+import io.rodyamirov.brucelang.ast.SimpleTypeReferenceNode;
 import io.rodyamirov.brucelang.ast.StringExprNode;
 import io.rodyamirov.brucelang.ast.TypeDeclarationNode;
 import io.rodyamirov.brucelang.ast.TypeDefinitionNode;
 import io.rodyamirov.brucelang.ast.TypeFieldsNode;
-import io.rodyamirov.brucelang.ast.TypeReferenceNode;
+import io.rodyamirov.brucelang.ast.TypeFuncCallNode;
+import io.rodyamirov.brucelang.ast.TypeFuncExprNode;
+import io.rodyamirov.brucelang.ast.TypeFuncTypeRefNode;
 import io.rodyamirov.brucelang.ast.VariableDeclarationNode;
 import io.rodyamirov.brucelang.ast.VariableDefinitionNode;
 import io.rodyamirov.brucelang.ast.VariableReferenceNode;
@@ -35,7 +40,8 @@ public class TypeRegistrar {
 
     // This is a SUPER simple walker where every node (but one) just gets the current "context" (state
     // of the type registry) as a pre-walk. The only exception is a type definition, which registers
-    // the
+    // the "definition" of a type to the name of the type itself
+    // TODO: this is going to be the place where we really have to work to implement parametrized types
     private static class TypeRegistrarWalker implements ASTWalker {
         private TypeRegistry typeRegistry;
 
@@ -84,18 +90,33 @@ public class TypeRegistrar {
         }
 
         @Override
-        public void simpleTypeRefWalk(WalkFunctions<TypeReferenceNode.SimpleTypeReferenceNode> walkFunctions) {
+        public void simpleTypeRefWalk(WalkFunctions<SimpleTypeReferenceNode> walkFunctions) {
             walkFunctions.preWalker(this::useCurrent);
         }
 
         @Override
-        public void parTypeRefWalk(WalkFunctions<TypeReferenceNode.ParametrizedTypeReferenceNode> walkFunctions) {
+        public void parTypeRefWalk(WalkFunctions<ParametrizedTypeReferenceNode> walkFunctions) {
             walkFunctions.preWalker(NotImplementedException.thrown());
             walkFunctions.postWalker(NotImplementedException.thrown());
         }
 
         @Override
-        public void funcTypeRefWalk(WalkFunctions<TypeReferenceNode.FunctionTypeReferenceNode> walkFunctions) {
+        public void typeFuncWalk(WalkFunctions<TypeFuncExprNode> walkFunctions) {
+            walkFunctions.preWalker(this::useCurrent);
+        }
+
+        @Override
+        public void typeFuncRefWalk(WalkFunctions<TypeFuncTypeRefNode> walkFunctions) {
+            walkFunctions.preWalker(this::useCurrent);
+        }
+
+        @Override
+        public void typeFuncCallWalk(WalkFunctions<TypeFuncCallNode> walkFunctions) {
+            walkFunctions.preWalker(this::useCurrent);
+        }
+
+        @Override
+        public void funcTypeRefWalk(WalkFunctions<FunctionTypeReferenceNode> walkFunctions) {
             walkFunctions.preWalker(this::useCurrent);
         }
 
