@@ -9,7 +9,7 @@ import java.util.List;
 public abstract class ExpressionNode extends ASTNode implements Typed {
     // whether this expression is a definitional expression (something is "let x = [this expression]")
     private boolean isDefExpr;
-    private VariableDeclarationNode definedName;
+    private VariableDeclarationNode definedName; // a reference to the definition, if any; this is not a child!
     private TypeReferenceNode typeReference;
 
     protected ExpressionNode() {

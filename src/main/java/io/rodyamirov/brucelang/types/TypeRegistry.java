@@ -1,6 +1,7 @@
 package io.rodyamirov.brucelang.types;
 
 import io.rodyamirov.brucelang.NotImplementedException;
+import io.rodyamirov.brucelang.ast.SimpleTypeReferenceNode;
 import io.rodyamirov.brucelang.ast.TypeDeclarationNode;
 import io.rodyamirov.brucelang.ast.TypeFieldsNode;
 import io.rodyamirov.brucelang.ast.TypeReferenceNode;
@@ -22,8 +23,9 @@ public class TypeRegistry {
 
     @Nonnull
     public TypeFieldsNode getDefinition(TypeReferenceNode typeReference) {
-        if (typeReference instanceof TypeReferenceNode.SimpleTypeReferenceNode) {
-            String simpleName = ((TypeReferenceNode.SimpleTypeReferenceNode) typeReference).getName();
+        // TODO: downcasting is gross
+        if (typeReference instanceof SimpleTypeReferenceNode) {
+            String simpleName = ((SimpleTypeReferenceNode) typeReference).getName();
             TypeDeclarationNode declaration = typeReference.getNamespace().getTypeDeclaration(simpleName);
             String resolvedName = declaration.getCanonicalName();
             TypeFieldsNode savedDefinition = savedDefinitions.get(resolvedName);

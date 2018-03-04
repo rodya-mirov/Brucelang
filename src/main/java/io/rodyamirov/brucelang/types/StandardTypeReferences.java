@@ -1,10 +1,15 @@
 package io.rodyamirov.brucelang.types;
 
+import io.rodyamirov.brucelang.ast.FunctionTypeReferenceNode;
+import io.rodyamirov.brucelang.ast.SimpleTypeReferenceNode;
+import io.rodyamirov.brucelang.ast.TypeDeclarationNode;
+import io.rodyamirov.brucelang.ast.TypeFuncTypeRefNode;
 import io.rodyamirov.brucelang.ast.TypeReferenceNode;
 import io.rodyamirov.brucelang.staticanalysis.Namespace;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class StandardTypeReferences {
     public static final String INTEGER = "Integer";
@@ -14,7 +19,7 @@ public class StandardTypeReferences {
     private StandardTypeReferences() {
     }
 
-    public static TypeReferenceNode.FunctionTypeReferenceNode makeFunctionType(
+    public static FunctionTypeReferenceNode makeFunctionType(
             List<TypeReferenceNode> paramTypes,
             TypeReferenceNode returnType,
             Namespace namespace) {
@@ -22,25 +27,46 @@ public class StandardTypeReferences {
         List<TypeReferenceNode> typeArgs = new ArrayList<>(paramTypes.size());
         typeArgs.addAll(paramTypes);
 
-        TypeReferenceNode.FunctionTypeReferenceNode out = new TypeReferenceNode.FunctionTypeReferenceNode(typeArgs, returnType);
+        FunctionTypeReferenceNode out = new FunctionTypeReferenceNode(typeArgs, returnType);
         out.setNamespace(namespace);
         return out;
     }
 
-    public static TypeReferenceNode.SimpleTypeReferenceNode makeIntegerType(Namespace namespace) {
-        TypeReferenceNode.SimpleTypeReferenceNode out = new TypeReferenceNode.SimpleTypeReferenceNode(INTEGER);
+    public static TypeFuncTypeRefNode makeTypeFunctionType(
+            List<TypeDeclarationNode> params,
+            TypeReferenceNode returnType,
+            Namespace namespace) {
+
+        List<SimpleTypeReferenceNode> typeParams = params.stream()
+                .map(decl -> makeDirectReference(decl, namespace))
+                .collect(Collectors.toList());
+
+        TypeFuncTypeRefNode out = new TypeFuncTypeRefNode(typeParams, returnType);
+        out.setNamespace(namespace);
+
+        return out;
+    }
+
+    public static SimpleTypeReferenceNode makeIntegerType(Namespace namespace) {
+        SimpleTypeReferenceNode out = new SimpleTypeReferenceNode(INTEGER);
         out.setNamespace(namespace);
         return out;
     }
 
-    public static TypeReferenceNode.SimpleTypeReferenceNode makeBooleanType(Namespace namespace) {
-        TypeReferenceNode.SimpleTypeReferenceNode out = new TypeReferenceNode.SimpleTypeReferenceNode(BOOLEAN);
+    public static SimpleTypeReferenceNode makeBooleanType(Namespace namespace) {
+        SimpleTypeReferenceNode out = new SimpleTypeReferenceNode(BOOLEAN);
         out.setNamespace(namespace);
         return out;
     }
 
-    public static TypeReferenceNode.SimpleTypeReferenceNode makeStringType(Namespace namespace) {
-        TypeReferenceNode.SimpleTypeReferenceNode out = new TypeReferenceNode.SimpleTypeReferenceNode(STRING);
+    public static SimpleTypeReferenceNode makeStringType(Namespace namespace) {
+        SimpleTypeReferenceNode out = new SimpleTypeReferenceNode(STRING);
+        out.setNamespace(namespace);
+        return out;
+    }
+
+    public static SimpleTypeReferenceNode makeDirectReference(TypeDeclarationNode declarationNode, Namespace namespace) {
+        SimpleTypeReferenceNode out = new SimpleTypeReferenceNode(declarationNode.getName());
         out.setNamespace(namespace);
         return out;
     }

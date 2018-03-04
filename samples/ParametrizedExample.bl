@@ -1,0 +1,22 @@
+// type inference, obviously, is very helpful for making code not horrible
+// the type declaration for curry is completely optional but is written out for checking
+let curry: TypeFn(A1, A2, Out) -> Fn(Fn(A1, A2) -> O, A2) -> (Fn(A1) -> O) =
+    <A1, A2, O> => {
+        // this is expanded as a block to illustrate it is possible; normally you'd just
+        // do an expression lambda
+        let currier = (f: Fn(A1, A2) -> O, a2: A2) => (
+            (a1: A1) => f(a1, a2)
+        );
+        return currier;
+    };
+
+// this is an equivalent way to write the same thing
+// in fact the parens are unnecessary but imo they help readability
+let altCurry = <A1, A2, O> => ((f:Fn(A1, A2) -> O, a2: A2) => ((a1: A1) => f(a1, a2)));
+
+// doesn't do anything interesting, just demonstrates the type params are working
+let stupid = ((n1: Integer, n2: Integer) => "some string");
+
+// note we have to qualify curry's type parameters explicitly; this may some day
+// be inferred in some cases
+let curried = curry<Integer, Integer, String>(stupid, 15);

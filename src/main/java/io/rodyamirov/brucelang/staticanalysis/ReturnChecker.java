@@ -8,17 +8,22 @@ import io.rodyamirov.brucelang.ast.FieldAccessNode;
 import io.rodyamirov.brucelang.ast.FieldDeclarationNode;
 import io.rodyamirov.brucelang.ast.FunctionCallNode;
 import io.rodyamirov.brucelang.ast.FunctionExprNode;
+import io.rodyamirov.brucelang.ast.FunctionTypeReferenceNode;
 import io.rodyamirov.brucelang.ast.IfStatementNode;
 import io.rodyamirov.brucelang.ast.IntExprNode;
 import io.rodyamirov.brucelang.ast.NativeVarDefNode;
+import io.rodyamirov.brucelang.ast.ParametrizedTypeReferenceNode;
 import io.rodyamirov.brucelang.ast.ProgramNode;
 import io.rodyamirov.brucelang.ast.ReturnStatementNode;
+import io.rodyamirov.brucelang.ast.SimpleTypeReferenceNode;
 import io.rodyamirov.brucelang.ast.StatementNode;
 import io.rodyamirov.brucelang.ast.StringExprNode;
 import io.rodyamirov.brucelang.ast.TypeDeclarationNode;
 import io.rodyamirov.brucelang.ast.TypeDefinitionNode;
 import io.rodyamirov.brucelang.ast.TypeFieldsNode;
-import io.rodyamirov.brucelang.ast.TypeReferenceNode;
+import io.rodyamirov.brucelang.ast.TypeFuncCallNode;
+import io.rodyamirov.brucelang.ast.TypeFuncExprNode;
+import io.rodyamirov.brucelang.ast.TypeFuncTypeRefNode;
 import io.rodyamirov.brucelang.ast.VariableDeclarationNode;
 import io.rodyamirov.brucelang.ast.VariableDefinitionNode;
 import io.rodyamirov.brucelang.ast.VariableReferenceNode;
@@ -41,7 +46,11 @@ public class ReturnChecker {
 
     public static class NoReturnException extends AstException {
         public NoReturnException(FunctionExprNode node) {
-            super(node, String.format("Not all code paths for '%s' return a value!", node.getCanonicalName()));
+            super(node, String.format("Not all code paths for '%s' return a value!", node.getFullName()));
+        }
+
+        public NoReturnException(TypeFuncExprNode node) {
+            super(node, String.format("Not all code paths for '%s' return a value!", node.getFullName()));
         }
     }
 
@@ -76,7 +85,9 @@ public class ReturnChecker {
         }
 
         @Override
-        public void nativeVarDefWalk(WalkFunctions<NativeVarDefNode> walkFunctions) {
+        public void typeFuncWalk(WalkFunctions<TypeFuncExprNode> walkFunctions) {
+            walkFunctions.preWalker(func -> functionExprNodeStack.peek().getAndIncrement());
+            walkFunctions.postWalker(functionExprNode -> functionExprNodeStack.peek().getAndDecrement());
         }
 
         @Override
@@ -102,6 +113,18 @@ public class ReturnChecker {
 
         // most nodes have nothing to do with this check ....
         @Override
+        public void typeFuncCallWalk(WalkFunctions<TypeFuncCallNode> walkFunctions) {
+        }
+
+        @Override
+        public void typeFuncRefWalk(WalkFunctions<TypeFuncTypeRefNode> walkFunctions) {
+        }
+
+        @Override
+        public void nativeVarDefWalk(WalkFunctions<NativeVarDefNode> walkFunctions) {
+        }
+
+        @Override
         public void typeDefnWalk(WalkFunctions<TypeDefinitionNode> walkFunctions) {
         }
 
@@ -114,15 +137,15 @@ public class ReturnChecker {
         }
 
         @Override
-        public void simpleTypeRefWalk(WalkFunctions<TypeReferenceNode.SimpleTypeReferenceNode> walkFunctions) {
+        public void simpleTypeRefWalk(WalkFunctions<SimpleTypeReferenceNode> walkFunctions) {
         }
 
         @Override
-        public void parTypeRefWalk(WalkFunctions<TypeReferenceNode.ParametrizedTypeReferenceNode> walkFunctions) {
+        public void parTypeRefWalk(WalkFunctions<ParametrizedTypeReferenceNode> walkFunctions) {
         }
 
         @Override
-        public void funcTypeRefWalk(WalkFunctions<TypeReferenceNode.FunctionTypeReferenceNode> walkFunctions) {
+        public void funcTypeRefWalk(WalkFunctions<FunctionTypeReferenceNode> walkFunctions) {
         }
 
         @Override
@@ -185,6 +208,34 @@ public class ReturnChecker {
         }
 
         @Override
+        public void typeFuncRefWalk(WalkFunctions<TypeFuncTypeRefNode> walkFunctions) {
+        }
+
+        @Override
+        public void typeFuncWalk(WalkFunctions<TypeFuncExprNode> walkFunctions) {
+            walkFunctions.postWalker(typeFuncExprNode -> {
+                boolean doesReturn = false;
+
+                for (StatementNode statementNode : typeFuncExprNode.getDefinitionStatements()) {
+                    if (doesReturn) {
+                        // best-effort unreachable code catching
+                        throw new UnreachableCodeException(statementNode);
+                    }
+
+                    doesReturn = statementNode.doesReturn();
+                }
+
+                if (!doesReturn) {
+                    throw new NoReturnException(typeFuncExprNode);
+                }
+            });
+        }
+
+        @Override
+        public void typeFuncCallWalk(WalkFunctions<TypeFuncCallNode> walkFunctions) {
+        }
+
+        @Override
         public void nativeVarDefWalk(WalkFunctions<NativeVarDefNode> walkFunctions) {
             walkFunctions.preWalker(this::doesNotReturn);
         }
@@ -207,15 +258,15 @@ public class ReturnChecker {
         }
 
         @Override
-        public void simpleTypeRefWalk(WalkFunctions<TypeReferenceNode.SimpleTypeReferenceNode> walkFunctions) {
+        public void simpleTypeRefWalk(WalkFunctions<SimpleTypeReferenceNode> walkFunctions) {
         }
 
         @Override
-        public void parTypeRefWalk(WalkFunctions<TypeReferenceNode.ParametrizedTypeReferenceNode> walkFunctions) {
+        public void parTypeRefWalk(WalkFunctions<ParametrizedTypeReferenceNode> walkFunctions) {
         }
 
         @Override
-        public void funcTypeRefWalk(WalkFunctions<TypeReferenceNode.FunctionTypeReferenceNode> walkFunctions) {
+        public void funcTypeRefWalk(WalkFunctions<FunctionTypeReferenceNode> walkFunctions) {
         }
 
         @Override

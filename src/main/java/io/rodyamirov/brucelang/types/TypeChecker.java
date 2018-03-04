@@ -1,6 +1,5 @@
 package io.rodyamirov.brucelang.types;
 
-import io.rodyamirov.brucelang.NotImplementedException;
 import io.rodyamirov.brucelang.ast.ASTNode;
 import io.rodyamirov.brucelang.ast.BlockStatementNode;
 import io.rodyamirov.brucelang.ast.BoolExprNode;
@@ -10,15 +9,21 @@ import io.rodyamirov.brucelang.ast.FieldAccessNode;
 import io.rodyamirov.brucelang.ast.FieldDeclarationNode;
 import io.rodyamirov.brucelang.ast.FunctionCallNode;
 import io.rodyamirov.brucelang.ast.FunctionExprNode;
+import io.rodyamirov.brucelang.ast.FunctionTypeReferenceNode;
 import io.rodyamirov.brucelang.ast.IfStatementNode;
 import io.rodyamirov.brucelang.ast.IntExprNode;
 import io.rodyamirov.brucelang.ast.NativeVarDefNode;
+import io.rodyamirov.brucelang.ast.ParametrizedTypeReferenceNode;
 import io.rodyamirov.brucelang.ast.ProgramNode;
 import io.rodyamirov.brucelang.ast.ReturnStatementNode;
+import io.rodyamirov.brucelang.ast.SimpleTypeReferenceNode;
 import io.rodyamirov.brucelang.ast.StringExprNode;
 import io.rodyamirov.brucelang.ast.TypeDeclarationNode;
 import io.rodyamirov.brucelang.ast.TypeDefinitionNode;
 import io.rodyamirov.brucelang.ast.TypeFieldsNode;
+import io.rodyamirov.brucelang.ast.TypeFuncCallNode;
+import io.rodyamirov.brucelang.ast.TypeFuncExprNode;
+import io.rodyamirov.brucelang.ast.TypeFuncTypeRefNode;
 import io.rodyamirov.brucelang.ast.TypeReferenceNode;
 import io.rodyamirov.brucelang.ast.Typed;
 import io.rodyamirov.brucelang.ast.VariableDeclarationNode;
@@ -102,6 +107,48 @@ public class TypeChecker {
         }
 
         @Override
+        public void typeFuncWalk(WalkFunctions<TypeFuncExprNode> walkFunctions) {
+            walkFunctions.preWalker(typeFuncExprNode -> {
+                containingFunctions.push(new AtomicReference<>(null));
+            });
+
+            walkFunctions.postWalker(typeFuncExprNode -> {
+                TypeReferenceNode returnedType = containingFunctions.pop().get();
+                if (returnedType == null) {
+                    throw new WrongOrderException(typeFuncExprNode,
+                            "It should have been checked that all code paths return a value!");
+                }
+
+                TypeReferenceNode typeReferenceNode = StandardTypeReferences.makeTypeFunctionType(
+                        typeFuncExprNode.getTypeParameters(),
+                        returnedType,
+                        typeFuncExprNode.getChildNamespace()
+                );
+
+                typeFuncExprNode.setType(typeReferenceNode);
+            });
+        }
+
+        @Override
+        public void typeFuncCallWalk(WalkFunctions<TypeFuncCallNode> walkFunctions) {
+            walkFunctions.postWalker(typeFuncCallNode -> {
+                TypeReferenceNode baseType = typeFuncCallNode.getBaseNode().getType();
+                if (!(baseType instanceof TypeFuncTypeRefNode)) {
+                    throw new WrongTypeException(typeFuncCallNode,
+                            "Gave type parameters to an expression of type '%s', "
+                                    + "which is not a type function!",
+                            TreePrinter.printTree(baseType, true));
+                }
+
+                TypeReferenceNode evaluated = TypeEvaluator.evaluate(
+                        (TypeFuncTypeRefNode) baseType,
+                        typeFuncCallNode.getTypeArguments());
+
+                typeFuncCallNode.setType(evaluated);
+            });
+        }
+
+        @Override
         public void varDefnWalk(WalkFunctions<VariableDefinitionNode> walkFunctions) {
             walkFunctions.postWalker(variableDefinitionNode -> {
                 TypeReferenceNode declaredType = variableDefinitionNode
@@ -147,15 +194,14 @@ public class TypeChecker {
         public void fnCallWalk(WalkFunctions<FunctionCallNode> walkFunctions) {
             walkFunctions.postWalker(functionCallNode -> {
                 TypeReferenceNode baseType = functionCallNode.getFunctionNode().getType();
-                if (!(baseType instanceof TypeReferenceNode.FunctionTypeReferenceNode)) {
+                if (!(baseType instanceof FunctionTypeReferenceNode)) {
                     throw new WrongTypeException(functionCallNode,
                             "Cannot 'call' a value of type '%s'",
                             TreePrinter.printTree(baseType, true));
                 }
 
                 // TODO: is there a way to avoid downcasting? This is brittle wrt changing our class structure
-                TypeReferenceNode.FunctionTypeReferenceNode functionType =
-                        (TypeReferenceNode.FunctionTypeReferenceNode) baseType;
+                FunctionTypeReferenceNode functionType = (FunctionTypeReferenceNode) baseType;
 
                 int numFuncArgs = functionType.getArguments().size();
                 if (numFuncArgs != functionCallNode.getArguments().size()) {
@@ -199,18 +245,19 @@ public class TypeChecker {
         }
 
         @Override
-        public void simpleTypeRefWalk(WalkFunctions<TypeReferenceNode.SimpleTypeReferenceNode> walkFunctions) {
+        public void simpleTypeRefWalk(WalkFunctions<SimpleTypeReferenceNode> walkFunctions) {
         }
 
         @Override
-        public void parTypeRefWalk(WalkFunctions<TypeReferenceNode.ParametrizedTypeReferenceNode> walkFunctions) {
-            // TODO: this is really for generics! left here as a placeholder since function types no longer use this
-            walkFunctions.preWalker(NotImplementedException.thrown());
-            walkFunctions.postWalker(NotImplementedException.thrown());
+        public void parTypeRefWalk(WalkFunctions<ParametrizedTypeReferenceNode> walkFunctions) {
         }
 
         @Override
-        public void funcTypeRefWalk(WalkFunctions<TypeReferenceNode.FunctionTypeReferenceNode> walkFunctions) {
+        public void typeFuncRefWalk(WalkFunctions<TypeFuncTypeRefNode> walkFunctions) {
+        }
+
+        @Override
+        public void funcTypeRefWalk(WalkFunctions<FunctionTypeReferenceNode> walkFunctions) {
         }
 
         @Override

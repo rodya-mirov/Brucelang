@@ -9,16 +9,22 @@ import io.rodyamirov.brucelang.ast.FieldAccessNode;
 import io.rodyamirov.brucelang.ast.FieldDeclarationNode;
 import io.rodyamirov.brucelang.ast.FunctionCallNode;
 import io.rodyamirov.brucelang.ast.FunctionExprNode;
+import io.rodyamirov.brucelang.ast.FunctionTypeReferenceNode;
 import io.rodyamirov.brucelang.ast.IfStatementNode;
 import io.rodyamirov.brucelang.ast.IntExprNode;
 import io.rodyamirov.brucelang.ast.NativeVarDefNode;
+import io.rodyamirov.brucelang.ast.ParametrizedTypeReferenceNode;
 import io.rodyamirov.brucelang.ast.ProgramNode;
 import io.rodyamirov.brucelang.ast.ReturnStatementNode;
+import io.rodyamirov.brucelang.ast.SimpleTypeReferenceNode;
 import io.rodyamirov.brucelang.ast.StatementNode;
 import io.rodyamirov.brucelang.ast.StringExprNode;
 import io.rodyamirov.brucelang.ast.TypeDeclarationNode;
 import io.rodyamirov.brucelang.ast.TypeDefinitionNode;
 import io.rodyamirov.brucelang.ast.TypeFieldsNode;
+import io.rodyamirov.brucelang.ast.TypeFuncCallNode;
+import io.rodyamirov.brucelang.ast.TypeFuncExprNode;
+import io.rodyamirov.brucelang.ast.TypeFuncTypeRefNode;
 import io.rodyamirov.brucelang.ast.TypeReferenceNode;
 import io.rodyamirov.brucelang.ast.VariableDeclarationNode;
 import io.rodyamirov.brucelang.ast.VariableDefinitionNode;
@@ -106,6 +112,35 @@ public class Evaluator {
         }
 
         @Override
+        public void visitTypeFuncExpr(TypeFuncExprNode typeFuncExpr) {
+            ValueTable closure = this.valueTable;
+
+            Consumer<Stack<Object>> fnCaller = evalStack -> {
+                // all functions are closures, so we need to use the context the function was
+                // created with, not the one surrounding the function call. So we'll need to save
+                // the current context and restore it at the end.
+                ValueTable original = this.valueTable;
+
+                // we skip the parameters since they're types, and are only used for checking
+
+                this.valueTable = closure;
+                try {
+                    for (StatementNode stmt : typeFuncExpr.getDefinitionStatements()) {
+                        stmt.accept(this);
+                    }
+                } catch (ReturnException re) {
+                    evalStack.push(re.value);
+                    this.valueTable = original;
+                    return;
+                }
+
+                throw new NoReturnException(typeFuncExpr);
+            };
+
+            evalStack.push(fnCaller);
+        }
+
+        @Override
         public void visitVariableDefinition(VariableDefinitionNode variableDefinitionNode) {
             Object evalValue = evaluate(variableDefinitionNode.getEvalExpr());
 
@@ -155,17 +190,22 @@ public class Evaluator {
         }
 
         @Override
-        public void visitSimpleTypeReference(TypeReferenceNode.SimpleTypeReferenceNode simpleTypeReferenceNode) {
+        public void visitSimpleTypeReference(SimpleTypeReferenceNode simpleTypeReferenceNode) {
             throw new NotImplementedException();
         }
 
         @Override
-        public void visitParametrizedTypeReference(TypeReferenceNode.ParametrizedTypeReferenceNode parametrizedTypeReferenceNode) {
+        public void visitParametrizedTypeReference(ParametrizedTypeReferenceNode parametrizedTypeReferenceNode) {
             throw new NotImplementedException();
         }
 
         @Override
-        public void visitFunctionTypeReference(TypeReferenceNode.FunctionTypeReferenceNode functionTypeReferenceNode) {
+        public void visitFunctionTypeReference(FunctionTypeReferenceNode functionTypeReferenceNode) {
+            throw new NotImplementedException();
+        }
+
+        @Override
+        public void visitTypeFuncTypeRef(TypeFuncTypeRefNode typeFuncTypeRef) {
             throw new NotImplementedException();
         }
 
@@ -189,6 +229,13 @@ public class Evaluator {
             if (ifStatementNode.getElseStatement() != null) {
                 ifStatementNode.getElseStatement().accept(this);
             }
+        }
+
+        @Override
+        public void visitTypeFuncCall(TypeFuncCallNode typeFuncCall) {
+            Consumer<Stack<Object>> typeFunctionObject = evaluate(typeFuncCall.getBaseNode());
+            // we actually don't care what the arguments were -- they're only used for type checking
+            typeFunctionObject.accept(evalStack);
         }
 
         @Override
@@ -245,6 +292,10 @@ public class Evaluator {
         private static class NoReturnException extends AstException {
             public NoReturnException(FunctionExprNode functionCallNode) {
                 super(functionCallNode, "Function did not return!");
+            }
+
+            public NoReturnException(TypeFuncExprNode typeFuncExprNode) {
+                super(typeFuncExprNode, "Type Function did not return!");
             }
         }
     }

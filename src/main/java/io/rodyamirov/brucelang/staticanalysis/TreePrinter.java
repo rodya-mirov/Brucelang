@@ -8,17 +8,22 @@ import io.rodyamirov.brucelang.ast.FieldAccessNode;
 import io.rodyamirov.brucelang.ast.FieldDeclarationNode;
 import io.rodyamirov.brucelang.ast.FunctionCallNode;
 import io.rodyamirov.brucelang.ast.FunctionExprNode;
+import io.rodyamirov.brucelang.ast.FunctionTypeReferenceNode;
 import io.rodyamirov.brucelang.ast.IfStatementNode;
 import io.rodyamirov.brucelang.ast.IntExprNode;
 import io.rodyamirov.brucelang.ast.NativeVarDefNode;
+import io.rodyamirov.brucelang.ast.ParametrizedTypeReferenceNode;
 import io.rodyamirov.brucelang.ast.ProgramNode;
 import io.rodyamirov.brucelang.ast.ReturnStatementNode;
+import io.rodyamirov.brucelang.ast.SimpleTypeReferenceNode;
 import io.rodyamirov.brucelang.ast.StatementNode;
 import io.rodyamirov.brucelang.ast.StringExprNode;
 import io.rodyamirov.brucelang.ast.TypeDeclarationNode;
 import io.rodyamirov.brucelang.ast.TypeDefinitionNode;
 import io.rodyamirov.brucelang.ast.TypeFieldsNode;
-import io.rodyamirov.brucelang.ast.TypeReferenceNode;
+import io.rodyamirov.brucelang.ast.TypeFuncCallNode;
+import io.rodyamirov.brucelang.ast.TypeFuncExprNode;
+import io.rodyamirov.brucelang.ast.TypeFuncTypeRefNode;
 import io.rodyamirov.brucelang.ast.VariableDeclarationNode;
 import io.rodyamirov.brucelang.ast.VariableDefinitionNode;
 import io.rodyamirov.brucelang.ast.VariableReferenceNode;
@@ -103,6 +108,32 @@ public class TreePrinter {
         }
 
         @Override
+        public void visitTypeFuncCall(TypeFuncCallNode typeFuncCall) {
+            typeFuncCall.getBaseNode().accept(this);
+
+            stringBuilder.append('<');
+
+            commaSepList(typeFuncCall.getTypeArguments());
+
+            stringBuilder.append('>');
+        }
+
+        @Override
+        public void visitTypeFuncExpr(TypeFuncExprNode typeFuncExpr) {
+            stringBuilder.append('<');
+
+            commaSepList(typeFuncExpr.getTypeParameters());
+
+            stringBuilder.append("> => {");
+
+            typeFuncExpr.getDefinitionStatements().forEach(node -> node.accept(this));
+
+            indent(typeFuncExpr.getNamespace().getDepth());
+            stringBuilder.append('}');
+            newline();
+        }
+
+        @Override
         public void visitNativeVarDef(NativeVarDefNode nativeVarDefNode) {
             indent(nativeVarDefNode.getNamespace().getDepth());
             stringBuilder.append("declare native ");
@@ -146,12 +177,12 @@ public class TreePrinter {
         }
 
         @Override
-        public void visitSimpleTypeReference(TypeReferenceNode.SimpleTypeReferenceNode simpleTypeReferenceNode) {
+        public void visitSimpleTypeReference(SimpleTypeReferenceNode simpleTypeReferenceNode) {
             stringBuilder.append(simpleTypeReferenceNode.getName());
         }
 
         @Override
-        public void visitParametrizedTypeReference(TypeReferenceNode.ParametrizedTypeReferenceNode parametrizedTypeReferenceNode) {
+        public void visitParametrizedTypeReference(ParametrizedTypeReferenceNode parametrizedTypeReferenceNode) {
             parametrizedTypeReferenceNode.getBaseReference().accept(this);
 
             stringBuilder.append('<');
@@ -162,13 +193,24 @@ public class TreePrinter {
         }
 
         @Override
-        public void visitFunctionTypeReference(TypeReferenceNode.FunctionTypeReferenceNode functionTypeReferenceNode) {
+        public void visitFunctionTypeReference(FunctionTypeReferenceNode functionTypeReferenceNode) {
             stringBuilder.append("Fn(");
 
             commaSepList(functionTypeReferenceNode.getArguments());
 
             stringBuilder.append(") -> ");
             functionTypeReferenceNode.getReturnType().accept(this);
+        }
+
+        @Override
+        public void visitTypeFuncTypeRef(TypeFuncTypeRefNode typeFuncTypeRef) {
+            stringBuilder.append("TypeFn(");
+
+            commaSepList(typeFuncTypeRef.getTypeParameters());
+
+            stringBuilder.append(") -> ");
+
+            typeFuncTypeRef.getResultType().accept(this);
         }
 
         @Override

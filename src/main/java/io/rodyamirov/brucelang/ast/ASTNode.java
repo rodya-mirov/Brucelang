@@ -8,10 +8,17 @@ import javax.annotation.Nonnull;
 import java.util.List;
 
 public abstract class ASTNode {
+    private static long runningId = 0L;
+    private final long nodeId = runningId++;
+
     private Namespace namespace;
     private TypeRegistry typeRegistry;
 
     protected ASTNode() {
+    }
+
+    public long getNodeId() {
+        return nodeId;
     }
 
     public abstract void accept(ASTVisitor visitor);
@@ -47,6 +54,10 @@ public abstract class ASTNode {
     public interface ASTVisitor {
         void visitProgram(ProgramNode programNode);
 
+        void visitTypeFuncExpr(TypeFuncExprNode typeFuncExpr);
+        void visitTypeFuncTypeRef(TypeFuncTypeRefNode typeFuncTypeRef);
+        void visitTypeFuncCall(TypeFuncCallNode typeFuncCall);
+
         void visitFunctionExpr(FunctionExprNode functionExprNode);
         void visitVariableDefinition(VariableDefinitionNode variableDefinitionNode);
 
@@ -57,9 +68,9 @@ public abstract class ASTNode {
         void visitTypeFields(TypeFieldsNode typeFieldsNode);
         void visitFieldDeclaration(FieldDeclarationNode fieldDeclaration);
 
-        void visitSimpleTypeReference(TypeReferenceNode.SimpleTypeReferenceNode simpleTypeReferenceNode);
-        void visitParametrizedTypeReference(TypeReferenceNode.ParametrizedTypeReferenceNode parametrizedTypeReferenceNode);
-        void visitFunctionTypeReference(TypeReferenceNode.FunctionTypeReferenceNode functionTypeReferenceNode);
+        void visitSimpleTypeReference(SimpleTypeReferenceNode simpleTypeReferenceNode);
+        void visitParametrizedTypeReference(ParametrizedTypeReferenceNode parametrizedTypeReferenceNode);
+        void visitFunctionTypeReference(FunctionTypeReferenceNode functionTypeReferenceNode);
 
         void visitNativeVarDef(NativeVarDefNode nativeVarDefNode);
 

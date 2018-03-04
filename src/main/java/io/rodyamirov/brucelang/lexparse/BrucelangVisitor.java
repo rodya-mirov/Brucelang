@@ -117,19 +117,19 @@ public interface BrucelangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitIfStmt(BrucelangParser.IfStmtContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code fullVarDef}
+	 * Visit a parse tree produced by the {@code simpleVarDef}
 	 * labeled alternative in {@link BrucelangParser#varDef}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitFullVarDef(BrucelangParser.FullVarDefContext ctx);
+	T visitSimpleVarDef(BrucelangParser.SimpleVarDefContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code inferredVarDef}
+	 * Visit a parse tree produced by the {@code parametrizedVarDef}
 	 * labeled alternative in {@link BrucelangParser#varDef}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitInferredVarDef(BrucelangParser.InferredVarDefContext ctx);
+	T visitParametrizedVarDef(BrucelangParser.ParametrizedVarDefContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link BrucelangParser#fnDef}.
 	 * @param ctx the parse tree
@@ -137,13 +137,15 @@ public interface BrucelangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFnDef(BrucelangParser.FnDefContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link BrucelangParser#varDecl}.
+	 * Visit a parse tree produced by the {@code explicitVarDecl}
+	 * labeled alternative in {@link BrucelangParser#varDecl}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitVarDecl(BrucelangParser.VarDeclContext ctx);
+	T visitExplicitVarDecl(BrucelangParser.ExplicitVarDeclContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link BrucelangParser#inferredVarDecl}.
+	 * Visit a parse tree produced by the {@code inferredVarDecl}
+	 * labeled alternative in {@link BrucelangParser#varDecl}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
@@ -184,6 +186,20 @@ public interface BrucelangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFnType(BrucelangParser.FnTypeContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code typeFnType}
+	 * labeled alternative in {@link BrucelangParser#typeExpr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTypeFnType(BrucelangParser.TypeFnTypeContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code parenType}
+	 * labeled alternative in {@link BrucelangParser#typeExpr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitParenType(BrucelangParser.ParenTypeContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code noTypes}
 	 * labeled alternative in {@link BrucelangParser#typeExprList}.
 	 * @param ctx the parse tree
@@ -197,6 +213,20 @@ public interface BrucelangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitSomeTypes(BrucelangParser.SomeTypesContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code noIds}
+	 * labeled alternative in {@link BrucelangParser#idList}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNoIds(BrucelangParser.NoIdsContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code someIds}
+	 * labeled alternative in {@link BrucelangParser#idList}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSomeIds(BrucelangParser.SomeIdsContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code noExprs}
 	 * labeled alternative in {@link BrucelangParser#exprList}.
@@ -212,12 +242,19 @@ public interface BrucelangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitSomeExprs(BrucelangParser.SomeExprsContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code lambdaExpression}
+	 * Visit a parse tree produced by the {@code lambdaExpr}
 	 * labeled alternative in {@link BrucelangParser#expr}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitLambdaExpression(BrucelangParser.LambdaExpressionContext ctx);
+	T visitLambdaExpr(BrucelangParser.LambdaExprContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code typeLambdaExpr}
+	 * labeled alternative in {@link BrucelangParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTypeLambdaExpr(BrucelangParser.TypeLambdaExprContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code booleanExpression}
 	 * labeled alternative in {@link BrucelangParser#expr}.
@@ -225,6 +262,20 @@ public interface BrucelangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitBooleanExpression(BrucelangParser.BooleanExpressionContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code stmtTypeLambda}
+	 * labeled alternative in {@link BrucelangParser#typeLambda}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStmtTypeLambda(BrucelangParser.StmtTypeLambdaContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code exprTypeLambda}
+	 * labeled alternative in {@link BrucelangParser#typeLambda}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExprTypeLambda(BrucelangParser.ExprTypeLambdaContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code oneArgLambda}
 	 * labeled alternative in {@link BrucelangParser#lambda}.
@@ -308,6 +359,13 @@ public interface BrucelangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitNestedUnaryExpr(BrucelangParser.NestedUnaryExprContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code typeFnCall}
+	 * labeled alternative in {@link BrucelangParser#accessOrCall}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTypeFnCall(BrucelangParser.TypeFnCallContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code fnCall}
 	 * labeled alternative in {@link BrucelangParser#accessOrCall}.
 	 * @param ctx the parse tree
@@ -363,4 +421,40 @@ public interface BrucelangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitBoolConst(BrucelangParser.BoolConstContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link BrucelangParser#boolOp}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitBoolOp(BrucelangParser.BoolOpContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link BrucelangParser#compOp}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCompOp(BrucelangParser.CompOpContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link BrucelangParser#boolVal}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitBoolVal(BrucelangParser.BoolValContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link BrucelangParser#addOp}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAddOp(BrucelangParser.AddOpContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link BrucelangParser#mulOp}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitMulOp(BrucelangParser.MulOpContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link BrucelangParser#unaryOp}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitUnaryOp(BrucelangParser.UnaryOpContext ctx);
 }

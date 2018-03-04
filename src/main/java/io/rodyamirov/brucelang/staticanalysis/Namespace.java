@@ -3,6 +3,7 @@ package io.rodyamirov.brucelang.staticanalysis;
 import io.rodyamirov.brucelang.ast.FunctionExprNode;
 import io.rodyamirov.brucelang.ast.TypeDeclarationNode;
 import io.rodyamirov.brucelang.ast.TypeFieldsNode;
+import io.rodyamirov.brucelang.ast.TypeFuncExprNode;
 import io.rodyamirov.brucelang.ast.VariableDeclarationNode;
 import io.rodyamirov.brucelang.astexceptions.DoubleDefinitionException;
 import io.rodyamirov.brucelang.astexceptions.NameNotDefinedException;
@@ -81,14 +82,11 @@ public class Namespace {
     }
 
     public Namespace makeFunctionChild(FunctionExprNode functionExprNode) {
-        final String localName;
-        if (functionExprNode.isDefExpr()) {
-            localName = functionExprNode.getDefinedName().getVarName();
-        } else {
-            localName = functionExprNode.getAnonName();
-        }
+        return makeNamedChild(functionExprNode.getLocalName());
+    }
 
-        return makeNamedChild(localName);
+    public Namespace makeTypeFunctionChild(TypeFuncExprNode typeFuncExprNode) {
+        return makeNamedChild(typeFuncExprNode.getLocalName());
     }
 
     public Namespace makeTypeChild(TypeFieldsNode typeFieldsNode) {

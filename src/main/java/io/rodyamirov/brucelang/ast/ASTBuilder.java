@@ -5,6 +5,7 @@ import io.rodyamirov.brucelang.lexparse.BrucelangVisitor;
 import io.rodyamirov.brucelang.types.StandardTypeReferences;
 import io.rodyamirov.brucelang.util.ProgrammerError;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -72,6 +73,49 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
                 .collect(Collectors.toList());
 
         return new ProgramNode(statements);
+    }
+
+    @Override
+    public VariableDefinitionNode visitSimpleVarDef(BrucelangParser.SimpleVarDefContext ctx) {
+        VariableDeclarationNode declaration = (VariableDeclarationNode) ctx.varDecl().accept(this);
+        ExpressionNode expr = (ExpressionNode) ctx.expr().accept(this);
+
+        return new VariableDefinitionNode(declaration, expr);
+    }
+
+    @Override
+    public VariableDefinitionNode visitParametrizedVarDef(BrucelangParser.ParametrizedVarDefContext ctx) {
+        List<String> ids = (List<String>) ctx.idList().accept(this);
+        List<TypeDeclarationNode> params = ids.stream()
+                .map(TypeDeclarationNode::new)
+                .collect(Collectors.toList());
+
+        ExpressionNode expr = (ExpressionNode) ctx.expr().accept(this);
+        ReturnStatementNode returnStatement = new ReturnStatementNode(expr);
+
+        ExpressionNode typeFn = new TypeFuncExprNode(params, Collections.singletonList(returnStatement));
+
+        VariableDeclarationNode declaration = (VariableDeclarationNode) ctx.varDecl().accept(this);
+
+        return new VariableDefinitionNode(declaration, typeFn);
+    }
+
+    @Override
+    public VariableDeclarationNode visitExplicitVarDecl(BrucelangParser.ExplicitVarDeclContext ctx) {
+        String name = ctx.ID().getText();
+        TypeReferenceNode typeReferenceNode = (TypeReferenceNode) ctx.typeExpr().accept(this);
+
+        return new VariableDeclarationNode(name, typeReferenceNode);
+    }
+
+    @Override
+    public List<String> visitNoIds(BrucelangParser.NoIdsContext ctx) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<String> visitSomeIds(BrucelangParser.SomeIdsContext ctx) {
+        return ctx.ID().stream().map(TerminalNode::getText).collect(Collectors.toList());
     }
 
     @Override
@@ -213,22 +257,6 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
     }
 
     @Override
-    public VariableDefinitionNode visitFullVarDef(BrucelangParser.FullVarDefContext ctx) {
-        return new VariableDefinitionNode(
-                (VariableDeclarationNode) ctx.varDecl().accept(this),
-                (ExpressionNode) ctx.expr().accept(this)
-        );
-    }
-
-    @Override
-    public VariableDefinitionNode visitInferredVarDef(BrucelangParser.InferredVarDefContext ctx) {
-        return new VariableDefinitionNode(
-                (VariableDeclarationNode) ctx.inferredVarDecl().accept(this),
-                (ExpressionNode) ctx.expr().accept(this)
-        );
-    }
-
-    @Override
     public VariableDeclarationNode visitInferredVarDecl(BrucelangParser.InferredVarDeclContext ctx) {
         return new VariableDeclarationNode(ctx.ID().getText(),null);
     }
@@ -257,16 +285,7 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
         VariableDeclarationNode declarationNode = new VariableDeclarationNode(
                 ctx.ID().getText(), typeDeclaration);
 
-        definition.assignToName(declarationNode);
         return new VariableDefinitionNode(declarationNode, definition);
-    }
-
-    @Override
-    public VariableDeclarationNode visitVarDecl(BrucelangParser.VarDeclContext ctx) {
-        String name = ctx.ID().getText();
-        TypeReferenceNode type = (TypeReferenceNode) ctx.typeExpr().accept(this);
-
-        return new VariableDeclarationNode(name, type);
     }
 
     @Override
@@ -282,24 +301,38 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
     }
 
     @Override
-    public TypeReferenceNode.SimpleTypeReferenceNode visitSimpleType(BrucelangParser.SimpleTypeContext ctx) {
-        return new TypeReferenceNode.SimpleTypeReferenceNode(ctx.ID().getText());
+    public SimpleTypeReferenceNode visitSimpleType(BrucelangParser.SimpleTypeContext ctx) {
+        return new SimpleTypeReferenceNode(ctx.ID().getText());
     }
 
     @Override
-    public TypeReferenceNode.ParametrizedTypeReferenceNode visitComplexType(BrucelangParser.ComplexTypeContext ctx) {
-        TypeReferenceNode.SimpleTypeReferenceNode base = new TypeReferenceNode.SimpleTypeReferenceNode(ctx.ID().getText());
+    public ParametrizedTypeReferenceNode visitComplexType(BrucelangParser.ComplexTypeContext ctx) {
+        SimpleTypeReferenceNode base = new SimpleTypeReferenceNode(ctx.ID().getText());
         List<TypeReferenceNode> args = (List<TypeReferenceNode>) ctx.typeExprList().accept(this);
 
-        return new TypeReferenceNode.ParametrizedTypeReferenceNode(base, args);
+        return new ParametrizedTypeReferenceNode(base, args);
     }
 
     @Override
-    public TypeReferenceNode.FunctionTypeReferenceNode visitFnType(BrucelangParser.FnTypeContext ctx) {
+    public FunctionTypeReferenceNode visitFnType(BrucelangParser.FnTypeContext ctx) {
         List<TypeReferenceNode> args = (List<TypeReferenceNode>) ctx.typeExprList().accept(this);
         TypeReferenceNode returnType = (TypeReferenceNode) ctx.typeExpr().accept(this);
 
-        return new TypeReferenceNode.FunctionTypeReferenceNode(args, returnType);
+        return new FunctionTypeReferenceNode(args, returnType);
+    }
+
+    @Override
+    public TypeReferenceNode visitParenType(BrucelangParser.ParenTypeContext ctx) {
+        return (TypeReferenceNode) ctx.typeExpr().accept(this);
+    }
+
+    @Override
+    public TypeFuncTypeRefNode visitTypeFnType(BrucelangParser.TypeFnTypeContext ctx) {
+        List<SimpleTypeReferenceNode> params = ((List<String>) ctx.idList().accept(this))
+                .stream().map(SimpleTypeReferenceNode::new).collect(Collectors.toList());
+        TypeReferenceNode returnType = (TypeReferenceNode) ctx.typeExpr().accept(this);
+
+        return new TypeFuncTypeRefNode(params, returnType);
     }
 
     @Override
@@ -324,6 +357,38 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
         return ctx.expr().stream()
                 .map(node -> (ExpressionNode) node.accept(this))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public TypeFuncExprNode visitTypeLambdaExpr(BrucelangParser.TypeLambdaExprContext ctx) {
+        return (TypeFuncExprNode) ctx.typeLambda().accept(this);
+    }
+
+    @Override
+    public TypeFuncExprNode visitStmtTypeLambda(BrucelangParser.StmtTypeLambdaContext ctx) {
+        List<TypeDeclarationNode> typeParams =
+                ((List<String>) ctx.idList().accept(this)).stream()
+                        .map(TypeDeclarationNode::new)
+                        .collect(Collectors.toList());
+
+        List<StatementNode> definitionStatements =
+                ((BlockStatementNode) ctx.blockStmt().accept(this)).getStatements();
+
+        return new TypeFuncExprNode(typeParams, definitionStatements);
+    }
+
+    @Override
+    public TypeFuncExprNode visitExprTypeLambda(BrucelangParser.ExprTypeLambdaContext ctx) {
+        List<TypeDeclarationNode> typeParams =
+                ((List<String>) ctx.idList().accept(this)).stream()
+                        .map(TypeDeclarationNode::new)
+                        .collect(Collectors.toList());
+
+        ExpressionNode evalExpr = (ExpressionNode) ctx.expr().accept(this);
+
+        return new TypeFuncExprNode(
+                typeParams,
+                Collections.singletonList(new ReturnStatementNode(evalExpr)));
     }
 
     @Override
@@ -368,7 +433,7 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
     }
 
     @Override
-    public FunctionExprNode visitLambdaExpression(BrucelangParser.LambdaExpressionContext ctx) {
+    public FunctionExprNode visitLambdaExpr(BrucelangParser.LambdaExprContext ctx) {
         return (FunctionExprNode) ctx.lambda().accept(this);
     }
 
@@ -390,7 +455,7 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
 
         ExpressionNode left = (ExpressionNode) ctx.compExpr(0).accept(this);
         ExpressionNode right = (ExpressionNode) ctx.compExpr(1).accept(this);
-        String opName = lookupBinOp(ctx.BOOL_OP().getText());
+        String opName = (String) ctx.boolOp().accept(this);
 
         return new FunctionCallNode(
                 new FieldAccessNode(left, opName),
@@ -410,11 +475,41 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
 
         ExpressionNode left = (ExpressionNode) ctx.addExpr(0).accept(this);
         ExpressionNode right = (ExpressionNode) ctx.addExpr(1).accept(this);
-        String opName = lookupBinOp(ctx.COMP_OP().getText());
+        String opName = (String) ctx.compOp().accept(this);
 
         return new FunctionCallNode(
                 new FieldAccessNode(left, opName),
                 Collections.singletonList(right));
+    }
+
+    @Override
+    public String visitBoolOp(BrucelangParser.BoolOpContext ctx) {
+        return lookupBinOp(ctx.getText());
+    }
+
+    @Override
+    public String visitCompOp(BrucelangParser.CompOpContext ctx) {
+        return lookupBinOp(ctx.getText());
+    }
+
+    @Override
+    public String visitBoolVal(BrucelangParser.BoolValContext ctx) {
+        return ctx.getText();
+    }
+
+    @Override
+    public String visitAddOp(BrucelangParser.AddOpContext ctx) {
+        return lookupBinOp(ctx.getText());
+    }
+
+    @Override
+    public String visitMulOp(BrucelangParser.MulOpContext ctx) {
+        return lookupBinOp(ctx.getText());
+    }
+
+    @Override
+    public String visitUnaryOp(BrucelangParser.UnaryOpContext ctx) {
+        return lookupUnaryOp(ctx.getText());
     }
 
     /**
@@ -428,7 +523,7 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
 
         for (int i = 1; i < ctx.mulExpr().size(); i++) {
             // desugar this to (leftArg).opName(rightArg)
-            String opName = lookupBinOp(ctx.ADD_OP(i-1).getText());
+            String opName = (String)ctx.addOp(i-1).accept(this);
 
             ExpressionNode rightArg = (ExpressionNode) ctx.mulExpr(i).accept(this);
 
@@ -450,7 +545,7 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
         ExpressionNode current = (ExpressionNode) ctx.unaryExpr(0).accept(this);
 
         for (int i = 1; i < ctx.unaryExpr().size(); i++) {
-            String opName = lookupBinOp(ctx.MUL_OP(i-1).getText());
+            String opName = (String) ctx.mulOp(i-1).accept(this);
             ExpressionNode rightArg = (ExpressionNode) ctx.unaryExpr(i).accept(this);
 
             current = new FunctionCallNode(
@@ -464,6 +559,14 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
     @Override
     public ExpressionNode visitFallThroughAccessOrCall(BrucelangParser.FallThroughAccessOrCallContext ctx) {
         return (ExpressionNode) ctx.accessOrCall().accept(this);
+    }
+
+    @Override
+    public TypeFuncCallNode visitTypeFnCall(BrucelangParser.TypeFnCallContext ctx) {
+        return new TypeFuncCallNode(
+                (ExpressionNode) ctx.accessOrCall().accept(this),
+                (List<TypeReferenceNode>) ctx.typeExprList().accept(this)
+        );
     }
 
     @Override
@@ -504,7 +607,7 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
         return new FunctionCallNode(
                 new FieldAccessNode(
                         (ExpressionNode) ctx.unaryExpr().accept(this),
-                        lookupUnaryOp(ctx.UNARY_OP().getText())),
+                        (String) ctx.unaryOp().accept(this)),
                 Collections.emptyList());
     }
 
@@ -564,7 +667,7 @@ public class ASTBuilder extends AbstractParseTreeVisitor<Object> implements Bruc
      */
     @Override
     public BoolExprNode visitBoolConst(BrucelangParser.BoolConstContext ctx) {
-        boolean value = Boolean.parseBoolean(ctx.BOOL_VAL().getText());
+        boolean value = Boolean.parseBoolean((String) ctx.boolVal().accept(this));
         return new BoolExprNode(value);
     }
 }

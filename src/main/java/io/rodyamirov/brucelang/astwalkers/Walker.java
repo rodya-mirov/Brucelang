@@ -8,16 +8,21 @@ import io.rodyamirov.brucelang.ast.FieldAccessNode;
 import io.rodyamirov.brucelang.ast.FieldDeclarationNode;
 import io.rodyamirov.brucelang.ast.FunctionCallNode;
 import io.rodyamirov.brucelang.ast.FunctionExprNode;
+import io.rodyamirov.brucelang.ast.FunctionTypeReferenceNode;
 import io.rodyamirov.brucelang.ast.IfStatementNode;
 import io.rodyamirov.brucelang.ast.IntExprNode;
 import io.rodyamirov.brucelang.ast.NativeVarDefNode;
+import io.rodyamirov.brucelang.ast.ParametrizedTypeReferenceNode;
 import io.rodyamirov.brucelang.ast.ProgramNode;
 import io.rodyamirov.brucelang.ast.ReturnStatementNode;
+import io.rodyamirov.brucelang.ast.SimpleTypeReferenceNode;
 import io.rodyamirov.brucelang.ast.StringExprNode;
 import io.rodyamirov.brucelang.ast.TypeDeclarationNode;
 import io.rodyamirov.brucelang.ast.TypeDefinitionNode;
 import io.rodyamirov.brucelang.ast.TypeFieldsNode;
-import io.rodyamirov.brucelang.ast.TypeReferenceNode;
+import io.rodyamirov.brucelang.ast.TypeFuncCallNode;
+import io.rodyamirov.brucelang.ast.TypeFuncExprNode;
+import io.rodyamirov.brucelang.ast.TypeFuncTypeRefNode;
 import io.rodyamirov.brucelang.ast.VariableDeclarationNode;
 import io.rodyamirov.brucelang.ast.VariableDefinitionNode;
 import io.rodyamirov.brucelang.ast.VariableReferenceNode;
@@ -72,6 +77,21 @@ public final class Walker {
         }
 
         @Override
+        public void visitTypeFuncExpr(TypeFuncExprNode typeFuncExpr) {
+            visit(typeFuncExpr);
+        }
+
+        @Override
+        public void visitTypeFuncTypeRef(TypeFuncTypeRefNode typeFuncTypeRef) {
+            visit(typeFuncTypeRef);
+        }
+
+        @Override
+        public void visitTypeFuncCall(TypeFuncCallNode typeFuncCall) {
+            visit(typeFuncCall);
+        }
+
+        @Override
         public void visitNativeVarDef(NativeVarDefNode nativeVarDefNode) {
             visit(nativeVarDefNode);
         }
@@ -97,17 +117,17 @@ public final class Walker {
         }
 
         @Override
-        public void visitSimpleTypeReference(TypeReferenceNode.SimpleTypeReferenceNode simpleTypeReferenceNode) {
+        public void visitSimpleTypeReference(SimpleTypeReferenceNode simpleTypeReferenceNode) {
             visit(simpleTypeReferenceNode);
         }
 
         @Override
-        public void visitParametrizedTypeReference(TypeReferenceNode.ParametrizedTypeReferenceNode parametrizedTypeReferenceNode) {
+        public void visitParametrizedTypeReference(ParametrizedTypeReferenceNode parametrizedTypeReferenceNode) {
             visit(parametrizedTypeReferenceNode);
         }
 
         @Override
-        public void visitFunctionTypeReference(TypeReferenceNode.FunctionTypeReferenceNode functionTypeReferenceNode) {
+        public void visitFunctionTypeReference(FunctionTypeReferenceNode functionTypeReferenceNode) {
             visit(functionTypeReferenceNode);
         }
 
@@ -188,6 +208,21 @@ public final class Walker {
         }
 
         @Override
+        public void visitTypeFuncExpr(TypeFuncExprNode typeFuncExpr) {
+            typeFuncExprNodeWalkFunctions.getPreWalker().accept(typeFuncExpr);
+        }
+
+        @Override
+        public void visitTypeFuncTypeRef(TypeFuncTypeRefNode typeFuncTypeRef) {
+            typeFuncTypeRefNodeWalkFunctions.getPreWalker().accept(typeFuncTypeRef);
+        }
+
+        @Override
+        public void visitTypeFuncCall(TypeFuncCallNode typeFuncCall) {
+            typeFuncCallNodeWalkFunctions.getPreWalker().accept(typeFuncCall);
+        }
+
+        @Override
         public void visitNativeVarDef(NativeVarDefNode nativeVarDefNode) {
             nativeVarDefNodeWalkFunctions.getPreWalker().accept(nativeVarDefNode);
         }
@@ -228,17 +263,17 @@ public final class Walker {
         }
 
         @Override
-        public void visitSimpleTypeReference(TypeReferenceNode.SimpleTypeReferenceNode simpleTypeReferenceNode) {
+        public void visitSimpleTypeReference(SimpleTypeReferenceNode simpleTypeReferenceNode) {
             simpleTypeReferenceNodeWalkFunctions.getPreWalker().accept(simpleTypeReferenceNode);
         }
 
         @Override
-        public void visitParametrizedTypeReference(TypeReferenceNode.ParametrizedTypeReferenceNode parametrizedTypeReferenceNode) {
+        public void visitParametrizedTypeReference(ParametrizedTypeReferenceNode parametrizedTypeReferenceNode) {
             parametrizedTypeReferenceNodeWalkFunctions.getPreWalker().accept(parametrizedTypeReferenceNode);
         }
 
         @Override
-        public void visitFunctionTypeReference(TypeReferenceNode.FunctionTypeReferenceNode functionTypeReferenceNode) {
+        public void visitFunctionTypeReference(FunctionTypeReferenceNode functionTypeReferenceNode) {
             functionTypeReferenceNodeWalkFunctions.getPreWalker().accept(functionTypeReferenceNode);
         }
 
@@ -304,6 +339,21 @@ public final class Walker {
         }
 
         @Override
+        public void visitTypeFuncExpr(TypeFuncExprNode typeFuncExpr) {
+            typeFuncExprNodeWalkFunctions.getPostWalker().accept(typeFuncExpr);
+        }
+
+        @Override
+        public void visitTypeFuncTypeRef(TypeFuncTypeRefNode typeFuncTypeRef) {
+            typeFuncTypeRefNodeWalkFunctions.getPostWalker().accept(typeFuncTypeRef);
+        }
+
+        @Override
+        public void visitTypeFuncCall(TypeFuncCallNode typeFuncCall) {
+            typeFuncCallNodeWalkFunctions.getPostWalker().accept(typeFuncCall);
+        }
+
+        @Override
         public void visitNativeVarDef(NativeVarDefNode nativeVarDefNode) {
             nativeVarDefNodeWalkFunctions.getPostWalker().accept(nativeVarDefNode);
         }
@@ -344,17 +394,17 @@ public final class Walker {
         }
 
         @Override
-        public void visitSimpleTypeReference(TypeReferenceNode.SimpleTypeReferenceNode simpleTypeReferenceNode) {
+        public void visitSimpleTypeReference(SimpleTypeReferenceNode simpleTypeReferenceNode) {
             simpleTypeReferenceNodeWalkFunctions.getPostWalker().accept(simpleTypeReferenceNode);
         }
 
         @Override
-        public void visitParametrizedTypeReference(TypeReferenceNode.ParametrizedTypeReferenceNode parametrizedTypeReferenceNode) {
+        public void visitParametrizedTypeReference(ParametrizedTypeReferenceNode parametrizedTypeReferenceNode) {
             parametrizedTypeReferenceNodeWalkFunctions.getPostWalker().accept(parametrizedTypeReferenceNode);
         }
 
         @Override
-        public void visitFunctionTypeReference(TypeReferenceNode.FunctionTypeReferenceNode functionTypeReferenceNode) {
+        public void visitFunctionTypeReference(FunctionTypeReferenceNode functionTypeReferenceNode) {
             functionTypeReferenceNodeWalkFunctions.getPostWalker().accept(functionTypeReferenceNode);
         }
 
@@ -411,14 +461,17 @@ public final class Walker {
 
     private static class InferredWalker {
         final WalkFunctions<ProgramNode> programNodeWalkFunctions;
+        final WalkFunctions<TypeFuncExprNode> typeFuncExprNodeWalkFunctions;
+        final WalkFunctions<TypeFuncTypeRefNode> typeFuncTypeRefNodeWalkFunctions;
+        final WalkFunctions<TypeFuncCallNode> typeFuncCallNodeWalkFunctions;
         final WalkFunctions<NativeVarDefNode> nativeVarDefNodeWalkFunctions;
         final WalkFunctions<TypeDefinitionNode> typeDefinitionNodeWalkFunctions;
         final WalkFunctions<TypeFieldsNode> typeFieldsNodeWalkFunctions;
         final WalkFunctions<FieldDeclarationNode> fieldDeclarationNodeWalkFunctions;
         final WalkFunctions<TypeDeclarationNode> typeDeclarationNodeWalkFunctions;
-        final WalkFunctions<TypeReferenceNode.SimpleTypeReferenceNode> simpleTypeReferenceNodeWalkFunctions;
-        final WalkFunctions<TypeReferenceNode.ParametrizedTypeReferenceNode> parametrizedTypeReferenceNodeWalkFunctions;
-        final WalkFunctions<TypeReferenceNode.FunctionTypeReferenceNode> functionTypeReferenceNodeWalkFunctions;
+        final WalkFunctions<SimpleTypeReferenceNode> simpleTypeReferenceNodeWalkFunctions;
+        final WalkFunctions<ParametrizedTypeReferenceNode> parametrizedTypeReferenceNodeWalkFunctions;
+        final WalkFunctions<FunctionTypeReferenceNode> functionTypeReferenceNodeWalkFunctions;
         final WalkFunctions<FunctionExprNode> functionExprNodeWalkFunctions;
         final WalkFunctions<VariableDefinitionNode> variableDefinitionNodeWalkFunctions;
         final WalkFunctions<VariableDeclarationNode> variableDeclarationNodeWalkFunctions;
@@ -435,6 +488,9 @@ public final class Walker {
 
         public InferredWalker(ASTWalker astWalker) {
             this.programNodeWalkFunctions = getWalker(astWalker::programWalk);
+            this.typeFuncExprNodeWalkFunctions = getWalker(astWalker::typeFuncWalk);
+            this.typeFuncTypeRefNodeWalkFunctions = getWalker(astWalker::typeFuncRefWalk);
+            this.typeFuncCallNodeWalkFunctions = getWalker(astWalker::typeFuncCallWalk);
             this.nativeVarDefNodeWalkFunctions = getWalker(astWalker::nativeVarDefWalk);
             this.typeDefinitionNodeWalkFunctions = getWalker(astWalker::typeDefnWalk);
             this.typeFieldsNodeWalkFunctions = getWalker(astWalker::typeFieldsWalk);

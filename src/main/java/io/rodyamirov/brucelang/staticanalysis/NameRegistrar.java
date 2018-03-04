@@ -8,16 +8,21 @@ import io.rodyamirov.brucelang.ast.FieldAccessNode;
 import io.rodyamirov.brucelang.ast.FieldDeclarationNode;
 import io.rodyamirov.brucelang.ast.FunctionCallNode;
 import io.rodyamirov.brucelang.ast.FunctionExprNode;
+import io.rodyamirov.brucelang.ast.FunctionTypeReferenceNode;
 import io.rodyamirov.brucelang.ast.IfStatementNode;
 import io.rodyamirov.brucelang.ast.IntExprNode;
 import io.rodyamirov.brucelang.ast.NativeVarDefNode;
+import io.rodyamirov.brucelang.ast.ParametrizedTypeReferenceNode;
 import io.rodyamirov.brucelang.ast.ProgramNode;
 import io.rodyamirov.brucelang.ast.ReturnStatementNode;
+import io.rodyamirov.brucelang.ast.SimpleTypeReferenceNode;
 import io.rodyamirov.brucelang.ast.StringExprNode;
 import io.rodyamirov.brucelang.ast.TypeDeclarationNode;
 import io.rodyamirov.brucelang.ast.TypeDefinitionNode;
 import io.rodyamirov.brucelang.ast.TypeFieldsNode;
-import io.rodyamirov.brucelang.ast.TypeReferenceNode;
+import io.rodyamirov.brucelang.ast.TypeFuncCallNode;
+import io.rodyamirov.brucelang.ast.TypeFuncExprNode;
+import io.rodyamirov.brucelang.ast.TypeFuncTypeRefNode;
 import io.rodyamirov.brucelang.ast.VariableDeclarationNode;
 import io.rodyamirov.brucelang.ast.VariableDefinitionNode;
 import io.rodyamirov.brucelang.ast.VariableReferenceNode;
@@ -124,7 +129,7 @@ public class NameRegistrar {
         }
 
         @Override
-        public void simpleTypeRefWalk(WalkFunctions<TypeReferenceNode.SimpleTypeReferenceNode> walkFunctions) {
+        public void simpleTypeRefWalk(WalkFunctions<SimpleTypeReferenceNode> walkFunctions) {
             walkFunctions.preWalker(simpleTypeReferenceNode -> {
                 useContext(simpleTypeReferenceNode);
 
@@ -137,12 +142,17 @@ public class NameRegistrar {
         }
 
         @Override
-        public void parTypeRefWalk(WalkFunctions<TypeReferenceNode.ParametrizedTypeReferenceNode> walkFunctions) {
+        public void parTypeRefWalk(WalkFunctions<ParametrizedTypeReferenceNode> walkFunctions) {
             walkFunctions.preWalker(this::useContext);
         }
 
         @Override
-        public void funcTypeRefWalk(WalkFunctions<TypeReferenceNode.FunctionTypeReferenceNode> walkFunctions) {
+        public void funcTypeRefWalk(WalkFunctions<FunctionTypeReferenceNode> walkFunctions) {
+            walkFunctions.preWalker(this::useContext);
+        }
+
+        @Override
+        public void typeFuncCallWalk(WalkFunctions<TypeFuncCallNode> walkFunctions) {
             walkFunctions.preWalker(this::useContext);
         }
 
@@ -156,6 +166,23 @@ public class NameRegistrar {
             walkFunctions.postWalker(functionExprNode -> {
                 this.currentContext = currentContext.getParent();
             });
+        }
+
+        @Override
+        public void typeFuncWalk(WalkFunctions<TypeFuncExprNode> walkFunctions) {
+            walkFunctions.preWalker(typeFuncExprNode -> {
+                useContext(typeFuncExprNode);
+                this.currentContext = currentContext.makeTypeFunctionChild(typeFuncExprNode);
+            });
+
+            walkFunctions.postWalker(typeFuncExprNode -> {
+                this.currentContext = currentContext.getParent();
+            });
+        }
+
+        @Override
+        public void typeFuncRefWalk(WalkFunctions<TypeFuncTypeRefNode> walkFunctions) {
+            walkFunctions.preWalker(this::useContext);
         }
 
         @Override
